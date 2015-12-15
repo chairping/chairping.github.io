@@ -11,7 +11,11 @@ github_username:  chenping684
 
 # Build settings
 markdown: kramdown
+kramdown:
+  input: GFM
 highlighter: pygments
 permalink: pretty
 paginate: 5
+gems: [jekyll-paginate]
 exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
+
