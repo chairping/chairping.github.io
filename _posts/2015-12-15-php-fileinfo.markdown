@@ -1,7 +1,7 @@
 ---
 layout:    post
-title:     "php fileinfo 学习笔记"
-subtitle:  "文件相关扩展fileinfo"
+title:     "php fileinfo"
+subtitle:  "文件相关扩展fileinfo 学习笔记"
 date:       2015-12-15 11:02
 ---
 
