@@ -1,0 +1,35 @@
+---
+layout:    post
+title:     "linux 目录跳转神器z.sh"
+subtitle:  "shell脚本"
+date:       2015-12-16 12:16
+category: php
+---
+
+> [目录跳转神器github地址](https://github.com/rupa/z)
+
+#### 说明
+
+由于工作的原因，可能需要频繁的切换目录，较为麻烦。 z这个shell脚本就是为方便我们切换目录而不用输入很长的目录路径的目录调整工具。
+
+#### 安装方法
+
+[github](https://github.com/rupa/z)下载源码放在用户目录下`~/yourname/`(其他目录也可以).
+然后 vim 打开 `.bashrc`这个文件 在最后添加 `source /home/yourname/z/z.sh`
+最后执行 `source ~/.bashrc` 使其生效
+
+#### 使用
+
+进入一个目录下， 然后输入 `z` 加 回车键。z脚本就会记录这个目录路径.如下面的目录 `/var/www/html`
+
+```shell
+[root@centos ~]# cd /var/www/html/
+[root@centos html]# z
+4          /opt/z
+4          /var/www/html
+8          /www
+36         /www/blog
+``` 
+
+当你下次再想进入 `/var/www/html` 时， 在命令行输入 `z html` 就可以直接进去 `/var/www/html`目录下
+当然在没有重复的情况下，你也可以执行 `z h` 来进入`/var/www/html`目录
