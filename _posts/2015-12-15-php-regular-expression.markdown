@@ -5,14 +5,16 @@ subtitle:  "正则表达式知识整理"
 date:       2015-12-15 16:26
 category: php
 ---
-> 本文整理简述`正则表达式30分钟入门教程`并加入一些php实例来巩固学习 [该文章链接地址](http://www.oschina.net/question/12_9507) 
+> 本文整理简述`正则表达式30分钟入门教程` 并根据php官方文档进行补充以巩固所学
+> [正则表达式30分钟入门教程](http://www.oschina.net/question/12_9507)
+> [php官方文档之PCRE正则语法](http://php.net/manual/zh/regexp.introduction.php) 
 
 基础知识
 -------
 <div class="row">
     <div class="col-md-6">
         <table cellspacing="0" border="1">
-            <caption>表1.常用的元字符</caption>
+            <caption>表1.元字符</caption>
             <thead>
                 <tr><th scope="col">代码</th> <th scope="col">说明</th></tr>
             </thead>
@@ -24,6 +26,19 @@ category: php
                 <tr><td><span class="code">\b</span></td><td><span class="desc">匹配单词的开始或结束</span></td></tr>
                 <tr><td><span class="code">^</span></td><td><span class="desc">匹配字符串的开始</span></td></tr>
                 <tr><td><span class="code">$</span></td><td><span class="desc">匹配字符串的结束</span></td></tr>
+                <tr><td><span class="code">\</span></td><td><span class="desc">一般用于转义字符</span></td></tr>
+                <tr><td><span class="code">[</span></td><td><span class="desc">开始字符类定义</span></td></tr>
+                <tr><td><span class="code">]</span></td><td><span class="desc">结束字符类定义</span></td></tr>
+                <tr><td><span class="code">|</span></td><td><span class="desc">开始一个可选分支</span></td></tr>
+                <tr><td><span class="code">(</span></td><td><span class="desc">子组的开始标记</span></td></tr>
+                <tr><td><span class="code">)</span></td><td><span class="desc">子组的结束标记</span></td></tr>
+                <tr><td><span class="code">?</span></td><td><span class="desc">量词，表示 0 次或 1 次匹配。位于量词后面用于改变量词的贪婪特性</span></td></tr>
+                <tr><td><span class="code">*</span></td><td><span class="desc">量词，0 次或多次匹配</span></td></tr>
+                <tr><td><span class="code">+</span></td><td><span class="desc">量词，1 次或多次匹配</span></td></tr>
+                <tr><td><span class="code">{</span></td><td><span class="desc">自定义量词开始标记</span></td></tr>
+                <tr><td><span class="code">}</span></td><td><span class="desc">自定义量词结束标记</span></td></tr>
+                <tr><td><span class="code">^</span></td><td><span class="desc">(方括号内)仅在作为第一个字符时，表明字符类取反</span></td></tr>
+                <tr><td><span class="code">-</span></td><td><span class="desc">(方括号内)标记字符范围</span></td></tr>
             </tbody>
         </table>
     </div>
@@ -35,9 +50,9 @@ category: php
                <tr><th scope="col">代码/语法</th> <th scope="col">说明</th></tr>
            </thead>
            <tbody>
-               <tr><td><span class="code">*</span></td><td><span class="desc">重复零次或更多次</span></td></tr>
-               <tr><td><span class="code">+</span></td><td><span class="desc">重复一次或更多次</span></td></tr>
-               <tr><td><span class="code">?</span></td><td><span class="desc">重复零次或一次</span></td></tr>
+               <tr><td><span class="code">*</span></td><td><span class="desc">重复零次或更多次, 等价于 {0,}</span></td></tr>
+               <tr><td><span class="code">+</span></td><td><span class="desc">重复一次或更多次, 等价于 {1,}</span></td></tr>
+               <tr><td><span class="code">?</span></td><td><span class="desc">重复零次或一次, 等价于 {0,1}</span></td></tr>
                <tr><td><span class="code">{n}</span></td><td><span class="desc">重复n次</span></td></tr>
                <tr><td><span class="code">{n,}</span></td><td><span class="desc">重复n次或更多次</span></td></tr>
                <tr><td><span class="code">{n,m}</span></td><td><span class="desc">重复n到m次</span></td></tr>
@@ -55,10 +70,26 @@ category: php
 `Windows\d+` 匹配Windows后面跟1个或更多数字<br/>
 `^\w+`      匹配一行的第一个单词(或整个字 符串的第一个单词，具体匹配哪个意思得看选项设置)<br/>
 
+#### 分隔符
+ 当使用 PCRE 函数的时候，模式需要由分隔符闭合包裹。分隔符可以使任意非字母数字、非反斜线、非空白字符。
+
+经常使用的分隔符是正斜线(/)、hash符号(#) 以及取反符号(~)。下面的例子都是使用合法分隔符的模式。
+
+/foo bar/
+#^[^0-9]$#
++php+
+%[a-zA-Z0-9_-]%
+
+如果分隔符需要在模式内进行匹配，它必须使用反斜线进行转义。如果分隔符经常在 模式内出现， 一个更好的选择就是是用其他分隔符来提高可读性。
+
+/http:\/\//
+#http://#
+
+
 #### 字符转义
 如果想查找元字符本身的话，比如你查找.,或者*,就出现了问题：你没办法指定它们，因为它们会被解释成别的意思。这时你就得使用\来取消这些字符的特殊意义。
-`“(”和“)”也是元字符, 表1仅列出部分常用的元字符`
-例子：
+`“(”和“)”也是元字符, `
+例(仅列出部分， 参照表1.元字符)：
 `.` => `\.`
 `?` => `\?`
 `*` => `\*`
@@ -126,17 +157,67 @@ category: php
 理解这个表达式的关键是理解`2[0-4]\d|25[0-5]|[01]?\d\d?`， 这里我就不细说了，你自己应该能分析得出来它的意义。
 
 ```php
-if(preg_match('/((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)/', '255.168.1.25', $matches)) {
+if(preg_match('/((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)/', 
+'255.168.1.25', 
+$matches)) 
+{
     var_dump($matches);
 }
 output:
 array (size=4)
-  0 => string '192.168.1.25' (length=12) // 正则表示式匹配的字符串
-  1 => string '1.' (length=2)            // 捕获第一个括号里的字符((2[0-4]\d|25[0-5]|[01]?\d\d?)\.)
-  2 => string '1' (length=1)             // 捕获第一个括号里的的子括号(也就是第二个括号里面的字符)里面的字符字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
-  3 => string '25' (length=2)            // 捕获第第三个括号里面的字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
+  0 => string '192.168.1.25' // 正则表示式匹配的字符串
+  1 => string '1.'           // 捕获第一个括号里的字符((2[0-4]\d|25[0-5]|[01]?\d\d?)\.)
+  2 => string '1'            // 捕获第一个括号里的的子括号(也就是第二个括号里面的字符)
+                             // 里面的字符字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
+  3 => string '25'           // 捕获第第三个括号里面的字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
 ```
-    
+
+
+
+
+<div class="row">
+    <div class="col-md-12">
+        <table cellspacing="0" border="1">
+            <caption>((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3} 匹配255.168.1. 的捕获过程</caption> 
+            <tbody>
+                <tr>
+                    <th scope="col"></th> 
+                    <th scope="col">正则表达式</th>
+                    <th scope="col">匹配的字符串</th>
+                    <th scope="col">分组1</th>
+                    <th scope="col">分组2</th>
+                </tr>
+                <tr>
+                    <td><span class="code">第一次</span></td>
+                    <td><span class="desc">25[0-5]</span></td>
+                    <td><span class="desc">255.</span></td>
+                    <td><span class="desc">255.</span></td>
+                    <td><span class="desc">255</span></td>
+                </tr> 
+                <tr>
+                      <td><span class="code">第二次</span></td>
+                      <td><span class="desc">01]?\d\d?</span></td>
+                      <td><span class="desc">168.</span></td>
+                      <td><span class="desc">168.</span></td>
+                      <td><span class="desc">168</span></td>
+                </tr> 
+                <tr>
+                    <td><span class="code">第三次</span></td>
+                    <td><span class="desc">01]?\d\d?</span></td>
+                    <td><span class="desc">1.</span></td>
+                    <td><span class="desc">1.</span></td>
+                    <td><span class="desc">1</span></td>
+                </tr> 
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+虽然使用{3}重复了3次， 但是最终的分组号是不变的， 
+所以第二次覆盖第一次的结果， 第三次覆盖第二次的结果， 最终结果如上例所示
+分组三的结果仅匹配一次， 最终结果是25 
+
 #### 后向引用
 
 <div class="row">
@@ -300,84 +381,115 @@ a.*?b匹配最短的，以a开始，以b结 束的字符串。如果把它应用
 <div class="row">
     <div class="col-md-12">
        <table cellspacing="0" border="1">
-       <caption>表5.懒惰限定符</caption> <thead> 
+            <caption>表6.懒惰限定符</caption> <thead> 
        <tr>
-       <th scope="col">代码/语法</th> <th scope="col">说明</th>
+            <th scope="col">代码/语法</th> <th scope="col">说明</th>
        </tr>
        </thead> 
        <tbody>
-       <tr>
-       <td><span class="code">*?</span></td>
-       <td><span class="desc">重复任意次，但尽可能少重复</span></td>
-       </tr>
-       <tr>
-       <td><span class="code">+?</span></td>
-       <td><span class="desc">重复1次或更多次，但尽可能少重复</span></td>
-       </tr>
-       <tr>
-       <td><span class="code">??</span></td>
-       <td><span class="desc">重复0次或1次，但尽可能少重复</span></td>
-       </tr>
-       <tr>
-       <td><span class="code">{n,m}?</span></td>
-       <td><span class="desc">重复n到m次，但尽可能少重复</span></td>
-       </tr>
-       <tr>
-       <td><span class="code">{n,}?</span></td>
-       <td><span class="desc">重复n次以上，但尽可能少重复</span></td>
-       </tr>
+           <tr>
+               <td><span class="code">*?</span></td>
+               <td><span class="desc">重复任意次，但尽可能少重复</span></td>
+           </tr>
+           <tr>
+               <td><span class="code">+?</span></td>
+               <td><span class="desc">重复1次或更多次，但尽可能少重复</span></td>
+           </tr>
+           <tr>
+               <td><span class="code">??</span></td>
+               <td><span class="desc">重复0次或1次，但尽可能少重复</span></td>
+           </tr>
+           <tr>
+               <td><span class="code">{n,m}?</span></td>
+               <td><span class="desc">重复n到m次，但尽可能少重复</span></td>
+           </tr>
+           <tr>
+               <td><span class="code">{n,}?</span></td>
+               <td><span class="desc">重复n次以上，但尽可能少重复</span></td>
+           </tr>
        </tbody>
        </table>
     </div>
 </div>
 
-### 处理选项
-在C#中，你可以使用Regex(String, RegexOptions)构造函数来设置正则表达式的处理选项。 如：Regex regex = new Regex(@"\ba\w{6}\b", RegexOptions.IgnoreCase);
-
-上面介绍了几个选项如忽略大小写，处理多行等，这些选项能用来改变处理正则表达式的方式。下面是.Net中常用的正则表达式选项：
+### 内部选项设置
+下面是PHP中常用的正则表达式选项：
 
 <div class="row">
     <div class="col-md-12">
     <table cellspacing="0" border="1">
-    <caption>表6.常用的处理选项</caption> <thead> 
+        <caption>表7.处理选项</caption> <thead> 
     <tr>
-    <th scope="col">名称</th> <th scope="col">说明</th>
+        <th scope="col">名称</th> <th scope="col">说明</th>
     </tr>
     </thead> 
     <tbody>
-    <tr>
-    <td>IgnoreCase(忽略大小写)</td>
-    <td>匹配时不区分大小写。</td>
-    </tr>
-    <tr>
-    <td>Multiline(多行模式)</td>
-    <td>更改<span class="code">^</span>和<span class="code">$</span>的 含义，使它们分别在任意一行的行首和行尾匹配，而不仅仅在整个字符串的开头和结尾匹配。(在此模式下,<span class="code">$</span>的 精确含意是:匹配\n之前的位置以及字符串结束前的位置.)</td>
-    </tr>
-    <tr>
-    <td>Singleline(单行模式)</td>
-    <td>更改<span class="code">.</span>的含义，使它与每一个字符匹配（包括换行 符\n）。</td>
-    </tr>
-    <tr>
-    <td>IgnorePatternWhitespace(忽略空白)</td>
-    <td>忽略表达式中的非转义空白并启用由<span class="code">#</span>标记的注释。</td>
-    </tr>
-    <tr>
-    <td>ExplicitCapture(显式捕获)</td>
-    <td>仅捕获已被显式命名的组。</td>
-    </tr>
+        <tr>
+            <td>i(忽略大小写)</td>
+            <td>字母会进行大小写不敏感匹配。。</td>
+        </tr>
+        <tr>
+            <td>m(多行模式)</td>
+            <td>默认情况下，PCRE 认为目标字符串是由单行字符组成的(实际上它可能会包含多行)， "行首"元字符(^) 仅匹配字符串的开始位置， 而"行末"元字符($) 仅匹配字符串末尾， 或者最后的换行符(除非设置了 D 修饰符)。当这个修饰符设置之后，“行首”和“行末”就会匹配目标字符串中任意换行符之前或之后，另外， 还分别匹配目标字符串的最开始和最末尾位置。如果目标字符串中没有 "\n" 字符，或者模式中没有出现 ^ 或 $，设置这个修饰符不产生任何影响。 </td>
+        </tr>
+        <tr>
+            <td>s(单行模式)</td>
+            <td>如果设置了这个修饰符，模式中的点号元字符匹配所有字符，包含换行符。如果没有这个修饰符，点号不匹配换行符。 一个取反字符类比如 [^a] 总是匹配换行符，而不依赖于这个修饰符的设置。 </td>
+        </tr>
+        <tr>
+            <td>x(忽略空白)</td>
+            <td>如果设置了这个修饰符，模式中的没有经过转义的或不在字符类中的空白数据字符总会被忽略， 并且位于一个未转义的字符类外部的#字符和下一个换行符之间的字符也被忽略。 注意：这仅用于数据字符。 空白字符 还是不能在模式的特殊字符序列中出现，比如序列 (?( 引入了一个条件子组(译注: 这种语法定义的 特殊字符序列中如果出现空白字符会导致编译错误。 比如(?(就会导致错误)。 </td>
+        </tr>
+        <tr>
+            <td>e(显式捕获 Warning 本特性已自 PHP 5.5.0 起废弃。强烈建议不要使用本特性。 )</td>
+            <td>如果设置了这个被弃用的修饰符， preg_replace() 在进行了对替换字符串的 后向引用替换之后, 将替换后的字符串作为php 代码评估执行(eval 函数方式)，并使用执行结果 作为实际参与替换的字符串。单引号、双引号、反斜线(\)和 NULL 字符在 后向引用替换时会被用反斜线转义. </td>
+        </tr>         
+         
+       <tr>
+           <td>A</td>
+           <td>如果设置了这个修饰符，模式被强制为"锚定"模式，也就是说约束匹配使其仅从 目标字符串的开始位置搜索。这个效果同样可以使用适当的模式构造出来，</td>
+       </tr>      
+        <tr>
+          <td>D</td>
+          <td>如果这个修饰符被设置，模式中的元字符美元符号仅仅匹配目标字符串的末尾。如果这个修饰符 没有设置，当字符串以一个换行符结尾时， 美元符号还会匹配该换行符(但不会匹配之前的任何换行符)。 如果设置了修饰符m，这个修饰符被忽略. </td>
+        </tr>       
+       <tr>
+          <td>S</td>
+          <td>当一个模式需要多次使用的时候，为了得到匹配速度的提升，值得花费一些时间 对其进行一些额外的分析。如果设置了这个修饰符，这个额外的分析就会执行。当前， 这种对一个模式的分析仅仅适用于非锚定模式的匹配(即没有单独的固定开始字符)。 </td>
+        </tr>       
+                 
+       <tr>
+       <td>U</td>
+       <td>这个修饰符逆转了量词的"贪婪"模式。 使量词默认为非贪婪的，通过量词后紧跟? 的方式可以使其成为贪婪的。 它同样可以使用 模式内修饰符设置 (?U)进行设置， 或者在量词后以问号标记其非贪婪(比如.*?)。  </td>
+     </tr>    
+                 
+       <tr>
+         <td>X</td>
+         <td>模式中的任意反斜线后就 ingen 一个 没有特殊含义的字符都会导致一个错误，以此保留这些字符以保证向后兼容性。 当前没有其他特性由这个修饰符控制。 </td>
+        </tr>  
+        <tr>
+        <td>J </td>
+        <td>内部选项设置(?J)修改本地的PCRE_DUPNAMES选项。允许子组重名， (译注：只能通过内部选项设置，外部的 /J 设置会产生错误。)  </td>
+        </tr>  
+        <tr>
+          <td>u </td>
+          <td>模式字符串被认为是utf-8的.</td>
+        </tr>  
     </tbody>
     </table>
     </div>
 </div>
 
-### 平衡组/递归匹配
+### 递归匹配
+[PHP正则之递归匹配](http://www.laruence.com/2011/09/30/2179.html)
+[php官方文档之递归模式](http://www.php.net/manual/en/regexp.reference.recursive.php)
 
 ### 其他
 
 <div class="row">
     <div class="col-md-12">
        <table cellspacing="0" border="1">
-        <caption>表7.尚未详细讨论的语法</caption> 
+        <caption>表8.尚未详细讨论的语法</caption> 
         <thead> 
             <tr><th scope="col">代码/语法</th> <th scope="col">说明</th></tr>
        </thead> 
