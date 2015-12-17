@@ -16,24 +16,24 @@ category: php
 ### 实例
 
 目录结构：
-    
-       └──project
-           ├── composer.json
-           ├── composer.lock
-           ├── projects
-           │   └── components            组件包目录
-           │       ├── Library_1         公共类库1
-           │       │   └── fiddler.json
-           │       ├── Project_A         项目A组件
-           │       │   └── fiddler.json
-           │       └── Project_B         项目B组件
-           │           └── fiddler.json
-           └── vendor                    vendor上的目录比较多这里就不列出来了 
+
+   └──project
+       ├── composer.json
+       ├── composer.lock
+       ├── projects
+       │   └── components        // 组件包目录
+       │       ├── Library_1     // 公共类库1
+       │       │   └── fiddler.json
+       │       ├── Project_A        // 项目A组件
+       │       │   └── fiddler.json
+       │       └── Project_B        // 项目B组件
+       │           └── fiddler.json
+       └── vendor   // vendor上的目录比较多这里就不列出来了 
 
 Library_1/fiddler.json内容
     
       {
-          "autoload": {vendor
+          "autoload": {
                 "psr-0": {  // fig组织定义的psr-0自动加载规范
                     "Libra1\\": "src/"  
                 }
@@ -57,10 +57,9 @@ Project_A/fiddler.json内容
      }
 
 ### 执行fiddler脚本
-filder脚本执行一定要在composer.json同级的目录下执行, 即 本例子中的`project/`
+filder脚本执行一定要在composer.json同级的目录下执行, 即 本`project/vendor/`
 
 执行过程：
-
     cp@cp:/var/www/fiddler/projects$ sudo fiddler build
     Building fiddler.json projects.
      [Build] components/Library_1
@@ -68,7 +67,6 @@ filder脚本执行一定要在composer.json同级的目录下执行, 即 本例�
      [Build] components/Project_A
      
 执行结果：
-
      cp@cp:/var/www/fiddler/projects/components$ tree
      .
      ├── Library_1
