@@ -156,21 +156,20 @@ category: php
 如果能使用算术比较的话，或许能简单地解决这个问题，但是正则表达式中并不提供关于数学的任何功能，所以只能使用冗长的分组，选择，字符类来描述一个正确的IP地址：`((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)`。
 理解这个表达式的关键是理解`2[0-4]\d|25[0-5]|[01]?\d\d?`，
 
-```php
+{% highlight php startinline %}  
 if(preg_match('/((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)/', 
 '255.168.1.25', 
 $matches)) 
 {
     var_dump($matches);
 }
-output:
-array (size=4)
-  0 => string '192.168.1.25' // 正则表示式匹配的字符串
-  1 => string '1.'           // 捕获第一个括号里的字符((2[0-4]\d|25[0-5]|[01]?\d\d?)\.)
-  2 => string '1'            // 捕获第一个括号里的的子括号(也就是第二个括号里面的字符)
-                             // 里面的字符字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
-  3 => string '25'           // 捕获第第三个括号里面的字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
-```
+//output:
+//array (size=4)
+//  0 => string '192.168.1.25'   正则表示式匹配的字符串
+//  1 => string '1.'             捕获第一个括号里的字符((2[0-4]\d|25[0-5]|[01]?\d\d?)\.)
+//  2 => string '1'              捕获第一个括号里的的子括号(也就是第二个括号里面的字符)里面的字符字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
+//  3 => string '25'             捕获第第三个括号里面的字符(2[0-4]\d|25[0-5]|[01]?\d\d?)
+{% endhighlight %}
 
 
 
@@ -241,72 +240,74 @@ array (size=4)
 
 后向引用用于重复搜索前面某个分组匹配的文本。例如，`\1代表分组1匹配的文本`。
 
-*   程序自动分配组号
-    `\b(\w+)\b\s+\1\b`可以用来匹配重复的单词，像go go, 或者kitty kitty。
-    这个表达式首先是一个单词，也就是单词开始处和结束处之间的多于一个的字母或数字(\b(\w+)\b)，这个单词会被捕获到编号为1的分组中，然后是1个或几个空白符(`\s+`)，最后是分组1中捕获的内容（也就是前面匹配的那个单词）(`\1`)。
-        
-        if(preg_match('/\b(\w+)\b\s+\1\b/', 'go go', $matches)) {
-            var_dump($matches);   
-        } else {
-            echo 'nothing match';
-        }
-        output:
-        array (size=2)
-          0 => string 'go go' (length=5)  // 分组0对应整个正则表达式
-          1 => string 'go' (length=2)     // 分组1对应表达式(\w+) 括号里面的 \w+
+##### 程序自动分配组号
+`\b(\w+)\b\s+\1\b`可以用来匹配重复的单词，像go go, 或者kitty kitty。
+这个表达式首先是一个单词，也就是单词开始处和结束处之间的多于一个的字母或数字(\b(\w+)\b)，这个单词会被捕获到编号为1的分组中，然后是1个或几个空白符(`\s+`)，最后是分组1中捕获的内容（也就是前面匹配的那个单词）(`\1`)。
+   
+{% highlight php startinline %}   
+if(preg_match('/\b(\w+)\b\s+\1\b/', 'go go', $matches)) {
+    var_dump($matches);   
+} else {
+    echo 'nothing match';
+}
+//output:
+//array (size=2)
+//  0 => string 'go go' (length=5)  分组0对应整个正则表达式
+//  1 => string 'go' (length=2)     分组1对应表达式(\w+) 括号里面的 \w+
+{% endhighlight %}
 
-*   自己指定子表达式的组名。
+##### 自己指定子表达式的组名
 
-    要指定一个子表达式的组名，请使用这样的语法：`(?<Word>\w+)`(或者把尖括号换成'也行：`(?'Word'\w+))`,这样就把\w+的 组名指定为Word了。
+要指定一个子表达式的组名，请使用这样的语法：`(?<Word>\w+)`(或者把尖括号换成'也行：`(?'Word'\w+))`,这样就把\w+的 组名指定为Word了。
     
-        if(preg_match('/ab(?<Word>\w+)/', 'abcd1234?!', $matches)) {
-            var_dump($matches);   
-        } else {
-            echo 'nothing match';
-        }
-        output:
-        array (size=3)
-          0 => string 'abcd1234' (length=8)    // 分组0对应整个正则表达式匹配的字符串
-          'Word' => string 'cd1234' (length=6) // 分组Word对应表达式(?<Word>\w+) 括号里面的 \w+
-          1 => string 'cd1234' (length=6)      // 分组1对应表达式(?<Word>\w+) 括号里面的 \w+
-    
-    要反向引用这个分组捕获的 内容，你可以使用`\k<Word>`,所以上一个例子也可以写成这样：`\b(?<Word>\w+)\b\s+\k<Word>\b`。
-
-        if(preg_match('/\b(?<Word>\w+)\b\s+\k<Word>\b/', 'go go', $matches)) {
-            var_dump($matches);
-        } else {
-            echo 'nothing match';
-        }
-        output:
-        array (size=3)
-          0 => string 'go go' (length=5)
-          'Word' => string 'go' (length=2)
-          1 => string 'go' (length=2)
-
-* (?:exp)表达式语法来剥夺一个分组对组号分配的参与权。
-
-        // 例1 原始的分组表达式(\d)：
-        if(preg_match('/(\d){3}/', '999', $matches)) {
-            var_dump($matches);
-        } else {
-            echo 'nothing match';
-        }
-        output:
-        array (size=2)
-          0 => string '999' (length=3) // 分组0对应整个正则表达式匹配的字符串
-          1 => string '9' (length=1)   // 分组1对应表达式(\d)括号里面的 \w
+{% highlight php startinline %}   
+if(preg_match('/ab(?<Word>\w+)/', 'abcd1234?!', $matches)) {
+    var_dump($matches);   
+} else {
+    echo 'nothing match';
+}
+//output:
+//array (size=3)
+//  0 => string 'abcd1234' (length=8)      分组0对应整个正则表达式匹配的字符串
+//  'Word' => string 'cd1234' (length=6)   分组Word对应表达式(?<Word>\w+) 括号里面的 \w+
+//  1 => string 'cd1234' (length=6)        分组1对应表达式(?<Word>\w+) 括号里面的 \w+
+{% endhighlight %}
         
-        // 例2 (?:exp)语法表达式(?:\d+)：   
-         if(preg_match('/(?:\d){3}/', '999', $matches)) {
-             var_dump($matches);
-         } else {
-             echo 'nothing match';
-         }
-        output:
-        array (size=1)
-          0 => string '999' (length=3)  // 分组0对应整个正则表达式匹配的字符串
+   要反向引用这个分组捕获的 内容，你可以使用`\k<Word>`,所以上一个例子也可以写成这样：`\b(?<Word>\w+)\b\s+\k<Word>\b`。
 
-    由例1 和 例2的结果得出： 使用(?:exp)表达式语法后 `程序将不会分配组号给分组`
+ {% highlight php startinline %} 
+if(preg_match('/\b(?<Word>\w+)\b\s+\k<Word>\b/', 'go go', $matches)) {
+    var_dump($matches);
+} 
+//output:
+//array (size=3)
+//  0 => string 'go go' (length=5)
+//  'Word' => string 'go' (length=2)
+//  1 => string 'go' (length=2)
+ {% endhighlight %}
+ 
+##### (?:exp)表达式语法来剥夺一个分组对组号分配的参与权。
+
+ {% highlight php startinline %} 
+// 例1 原始的分组表达式(\d)：
+if(preg_match('/(\d){3}/', '999', $matches)) {
+    var_dump($matches);
+} 
+//output:
+//array (size=2)
+//  0 => string '999' (length=3)   分组0对应整个正则表达式匹配的字符串
+//  1 => string '9' (length=1)     分组1对应表达式(\d)括号里面的 \w
+
+// 例2 (?:exp)语法表达式(?:\d+)：   
+ if(preg_match('/(?:\d){3}/', '999', $matches)) {
+     var_dump($matches);
+ }
+//output:
+//array (size=1)
+//  0 => string '999' (length=3)    分组0对应整个正则表达式匹配的字符串
+ {% endhighlight %}
+ 
+由例1 和 例2的结果得出： 使用(?:exp)表达式语法后 `程序将不会分配组号给分组`
 
 
 ##### 零宽断言
@@ -326,47 +327,49 @@ array (size=4)
     </div>
 </div>
 
-* (?=exp) 零宽度正预测先行断言
+##### (?=exp) 零宽度正预测先行断言
 
-    它断言自身出现的位置的`后面`能匹配表达式exp,比如`\b\w+(?=ing\b)`，匹配以`ing`结尾的单词的前面部分(除了ing以外的部分)，
-    如查找`I'm singing while you're dancing.`时，它会匹配`sing`和`danc`
+它断言自身出现的位置的`后面`能匹配表达式exp,比如`\b\w+(?=ing\b)`，匹配以`ing`结尾的单词的前面部分(除了ing以外的部分)，
+如查找`I'm singing while you're dancing.`时，它会匹配`sing`和`danc`
 
-        preg_match('/xx(?=([^\.]))/', 'xxsdfsd.', $b);
-        var_dump($b);
-        //output: array(2) { [0] => 'xx' [1] => 's'}
-  
-    匹配非.前面符合xx的字符,即 `xx` 字符符合表达式  
+{% highlight php startinline %} 
+preg_match('/xx(?=([^\.]))/', 'xxsdfsd.', $b);
+var_dump($b);
+//output: array(2) { [0] => 'xx' [1] => 's'}
+{% endhighlight %}
+
+匹配非.前面符合xx的字符,即 `xx` 字符符合表达式  
     
-* (?<=exp)也叫零宽度正回顾后发断言
+#####  (?<=exp)也叫零宽度正回顾后发断言
     
-    它断言自身出现的位置的`前面`能匹配表达式exp,比如`(?<=\bre)\w+\b`会匹配以`re`开头的单词的后半部分(除了re以外的部分)，
-    例如在查找`reading a book`时，它匹配`ading`。
+它断言自身出现的位置的`前面`能匹配表达式exp,比如`(?<=\bre)\w+\b`会匹配以`re`开头的单词的后半部分(除了re以外的部分)，
+例如在查找`reading a book`时，它匹配`ading`。
+{% highlight php startinline %} 
+$a =  "
+        车损信息\n
+        维修零件名称：左后门\n
+        维修金额：200.0\n
+        维修零件名称：左后门\n
+        维修金额：240.0\n
+        维修零件名称：左后叶子板\n
+        维修金额：200.0\n
+        维修零件名称：左后叶子板\n
+        维修金额：240.0\n
+        维修零件名称：左侧门槛\n
+        维修金额：100.0\n
+        维修零件名称：左侧门槛\n
+        维修金额：100.0\n
+        维修零件名称：后杠\n
+        维修金额：240.0\n
+        维修零件名称：左后尾灯抛光\n
+        维修金额：50.0\n";
 
-        $a =  "
-                车损信息\n
-                维修零件名称：左后门\n
-                维修金额：200.0\n
-                维修零件名称：左后门\n
-                维修金额：240.0\n
-                维修零件名称：左后叶子板\n
-                维修金额：200.0\n
-                维修零件名称：左后叶子板\n
-                维修金额：240.0\n
-                维修零件名称：左侧门槛\n
-                维修金额：100.0\n
-                维修零件名称：左侧门槛\n
-                维修金额：100.0\n
-                维修零件名称：后杠\n
-                维修金额：240.0\n
-                维修零件名称：左后尾灯抛光\n
-                维修金额：50.0\n";
-        
-        preg_match('/(?<=维修零件名称：).*\n/', $a, $b);
-        var_dump($b);
-        //output: array (size=1)  0 => string '左后门
-        //            ' (length=10)
-        
-    匹配`维修零件名称：`后面以\n结尾的字符串
+preg_match('/(?<=维修零件名称：).*\n/', $a, $b);
+var_dump($b);
+//output: array (size=1)  0 => string '左后门
+//            ' (length=10)
+{% endhighlight %}    
+匹配`维修零件名称：`后面以\n结尾的字符串
 
 ### 贪婪与懒惰
 <div class="row">
@@ -418,14 +421,14 @@ if(preg_match('/a.*b/', 'aabab', $matches)) {
 有时，我们更需要`懒惰匹配`，也就是匹配尽可能少的 字符。前面给出的限定符都可以被转化为懒惰匹配模式，只要在它后面加上一个问号?。这样.*?就意味着匹配任意数量的重复，但是在能使整个匹配成功的前提 下使用最少的重复。现在看看懒惰版的例子吧：
 a.*?b匹配最短的，以a开始，以b结 束的字符串。如果把它应用于aabab的话，它会匹配aab（第一到第三个字符）和ab（第四到第五个字符）。
 
-```php
+{% highlight php startinline %}  
 if(preg_match('/a.*?b/', 'aabab', $matches)) {
     var_dump($matches);
 }
-output:
-array (size=1)
-  0 => string 'aab' (length=5)  // 懒惰匹配,匹配整个字符串aab
-```
+//output:
+//array (size=1)
+//  0 => string 'aab' (length=5)   懒惰匹配,匹配整个字符串aab
+{% endhighlight %}
 为什么第一个匹配是aab（第一到第三个字符）而不是ab（第四到第五个字符）？简单地说，因为正则表达式有另 一条规则，比懒惰／贪婪规则的优先级更高：最先开始的匹配拥有最高的优先权——`The match that begins earliest wins`。
 
 
