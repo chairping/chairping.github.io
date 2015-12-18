@@ -17,18 +17,20 @@ category: php
 
 目录结构：
 
-       └──project
-           ├── composer.json
-           ├── composer.lock
-           ├── projects
-           │   └── components        // 组件包目录
-           │       ├── Library_1     // 公共类库1
-           │       │   └── fiddler.json
-           │       ├── Project_A        // 项目A组件
-           │       │   └── fiddler.json
-           │       └── Project_B        // 项目B组件
-           │           └── fiddler.json
-           └── vendor   // vendor上的目录比较多这里就不列出来了 
+```
+└──project
+   ├── composer.json
+   ├── composer.lock
+   ├── projects
+   │   └── components        // 组件包目录
+   │       ├── Library_1     // 公共类库1
+   │       │   └── fiddler.json
+   │       ├── Project_A        // 项目A组件
+   │       │   └── fiddler.json
+   │       └── Project_B        // 项目B组件
+   │           └── fiddler.json
+   └── vendor   // vendor上的目录比较多这里就不列出来了 
+```
 
 Library_1/fiddler.json内容
 
@@ -74,38 +76,40 @@ Building fiddler.json projects.
 ```
 
 执行结果：
-     
-     cp@cp:/var/www/fiddler/projects/components$ tree
-     .
-     ├── Library_1
-     │   ├── fiddler.json
-     │   └── vendor
-     │       ├── autoload.php
-     │       └── composer
-     │           ├── autoload_classmap.php
-     │           ├── autoload_namespaces.php
-     │           ├── autoload_psr4.php
-     │           ├── autoload_real.php
-     │           └── ClassLoader.php
-     ├── Project_A
-     │   ├── fiddler.json
-     │   └── vendor
-     │       ├── autoload.php
-     │       └── composer
-     │           ├── autoload_classmap.php
-     │           ├── autoload_namespaces.php
-     │           ├── autoload_psr4.php
-     │           ├── autoload_real.php
-     │           └── ClassLoader.php
-     └── Project_B
-         ├── fiddler.json
-         └── vendor
-             ├── autoload.php
-             └── composer
-                 ├── autoload_classmap.php
-                 ├── autoload_namespaces.php
-                 ├── autoload_psr4.php
-                 ├── autoload_real.php
-                 └── ClassLoader.php
+
+```     
+ cp@cp:/var/www/fiddler/projects/components$ tree
+ .
+ ├── Library_1
+ │   ├── fiddler.json
+ │   └── vendor
+ │       ├── autoload.php
+ │       └── composer
+ │           ├── autoload_classmap.php
+ │           ├── autoload_namespaces.php
+ │           ├── autoload_psr4.php
+ │           ├── autoload_real.php
+ │           └── ClassLoader.php
+ ├── Project_A
+ │   ├── fiddler.json
+ │   └── vendor
+ │       ├── autoload.php
+ │       └── composer
+ │           ├── autoload_classmap.php
+ │           ├── autoload_namespaces.php
+ │           ├── autoload_psr4.php
+ │           ├── autoload_real.php
+ │           └── ClassLoader.php
+ └── Project_B
+     ├── fiddler.json
+     └── vendor
+         ├── autoload.php
+         └── composer
+             ├── autoload_classmap.php
+             ├── autoload_namespaces.php
+             ├── autoload_psr4.php
+             ├── autoload_real.php
+             └── ClassLoader.php
+ ```
 
 执行完后仅生成各自的自动加载文件， 所有的依赖包都的 `project/vendor` 目录下
