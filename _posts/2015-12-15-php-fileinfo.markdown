@@ -39,34 +39,34 @@ finfo 预定义常量
 函数简介: `finfo_file`    返回文件信息  `finfo_close`   关闭finfo_open创建的文件资源
 函数简介: `finfo_buffer`  返回一个字符串缓冲区的信息
 
-*   方法一：
+#### 方法一：
 
-    ```php
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);        // 返回 mime 类型
-    foreach (glob("fileinfo/*") as $filename) {
-        echo finfo_file($finfo, $filename) . "<br />"; // 输出mine信息
-    }
-    finfo_close($finfo);
+{% highlight php startinline %} 
+$finfo = finfo_open(FILEINFO_MIME_TYPE);        // 返回 mime 类型
+foreach (glob("fileinfo/*") as $filename) {
+    echo finfo_file($finfo, $filename) . "<br />"; // 输出mine信息
+}
+finfo_close($finfo);
 
-    // or 面向对象风格
+// or 面向对象风格
 
-    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-    foreach (glob("fileinfo/*") as $filename) {
-        echo  $finfo->file($filename) . "<br />";
-    }
-    ```
+$finfo = new \finfo(FILEINFO_MIME_TYPE);
+foreach (glob("fileinfo/*") as $filename) {
+    echo  $finfo->file($filename) . "<br />";
+}
+{% endhighlight %}
 
-*   方法二：
+#### 方法二：
 
-    ```php
-    $string = file_get_contents('/www/cp/public/fileinfo/boxed-bg.jpg');// 读取文件返回字符串内容
-    echo finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $string);         // 通过finfo_bufer 识别内容
+{% highlight php startinline %} 
+$string = file_get_contents('/www/cp/public/fileinfo/boxed-bg.jpg');// 读取文件返回字符串内容
+echo finfo_buffer(finfo_open(FILEINFO_MIME_TYPE), $string);         // 通过finfo_bufer 识别内容
 
-    // or 面向对象风格
+// or 面向对象风格
 
-    $fileinfo = new \finfo(FILEINFO_MIME_TYPE);
-    echo $fileinfo->buffer(file_get_contents('/www/cp/public/fileinfo/boxed-bg.jpg'));
-    ```
+$fileinfo = new \finfo(FILEINFO_MIME_TYPE);
+echo $fileinfo->buffer(file_get_contents('/www/cp/public/fileinfo/boxed-bg.jpg'));
+{% endhighlight %}
 
 
 http://www.jianshu.com/p/609e1197754c  jekyll创建博客

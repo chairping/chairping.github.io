@@ -22,7 +22,7 @@ category: php
 
 进入一个目录下， 然后输入 `z` 加 回车键。z脚本就会记录这个目录路径.如下面的目录 `/var/www/html`
 
-```shell
+```
 [root@centos ~]# cd /var/www/html/
 [root@centos html]# z
 4          /opt/z

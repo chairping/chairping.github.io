@@ -429,6 +429,7 @@ if(preg_match('/a.*?b/', 'aabab', $matches)) {
 //array (size=1)
 //  0 => string 'aab' (length=5)   懒惰匹配,匹配整个字符串aab
 {% endhighlight %}
+
 为什么第一个匹配是aab（第一到第三个字符）而不是ab（第四到第五个字符）？简单地说，因为正则表达式有另 一条规则，比懒惰／贪婪规则的优先级更高：最先开始的匹配拥有最高的优先权——`The match that begins earliest wins`。
 
 
