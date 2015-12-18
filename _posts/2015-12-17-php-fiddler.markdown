@@ -110,6 +110,6 @@ Building fiddler.json projects.
              ├── autoload_psr4.php
              ├── autoload_real.php
              └── ClassLoader.php
- ```
+```
 
 执行完后仅生成各自的自动加载文件， 所有的依赖包都的 `project/vendor` 目录下
