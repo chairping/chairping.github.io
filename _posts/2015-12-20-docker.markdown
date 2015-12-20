@@ -66,12 +66,33 @@ Docker 包括三个基本概念
 
     cp@cp:/var/www/html/Git/studyNote$ sudo docker pull ubuntu:14.04
     14.04: Pulling from library/ubuntu
-    0bf056161913: Downloading 10.81 MB/65.67 MB
-    1796d1c62d0c: Download complete 
-    e24428725dd6: Download complete 
-    89d5d8e8bafb: Download complete 
-    
+    0bf056161913: Pull complete 
+    1796d1c62d0c: Pull complete 
+    e24428725dd6: Pull complete 
+    89d5d8e8bafb: Pull complete 
+    Digest: sha256:d3b59c1d15c3cfb58d9f2eaab8a232f21fc670c67c11f582bc48fb32df17f3b3
+    Status: Downloaded newer image for ubuntu:14.04
 
+    cp@cp:/var/www/html/Git/studyNote$ sudo docker images
+    REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+    ubuntu              14.04               89d5d8e8bafb        11 days ago         187.9 MB
+    
+在列出信息中，可以看到几个字段信息
+
+*    来自于哪个仓库，比如 ubuntu
+*    镜像的标记，比如 14.04
+*    它的 ID 号（唯一）
+*    创建时间
+*    镜像大小
+
+##### 启动一个容器
+
+ `sudo docker run -t -i ubuntu:14.04 /bin/bash`
+ 
+     cp@cp:/var/www/html/Git/studyNote$  sudo docker run -t -i ubuntu:14.04 /bin/bash
+     root@6aec164f0d7a:/# 
+
+ 
 
 `docker rmi <ID>`                          删除单个镜像  
 `sudo docker rmi $(sudo docker images -q)` 删除所有镜像
