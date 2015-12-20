@@ -1,0 +1,9 @@
+---
+layout:    post
+title:     "ubuntu配置开机启动服务笔记"
+subtitle:  "便于查找"
+date:       2015-12-20 17:50
+---
+
+> 文档地址 [ubuntu配置开机启动服务](http://blog.csdn.net/dante_k7/article/details/7213151) 
+

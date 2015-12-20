@@ -63,6 +63,10 @@ date:       2015-12-20 17:50
 
 [Git超级简明手册](https://github.com/shendl1978/blog/wiki/Git%E8%B6%85%E7%BA%A7%E7%AE%80%E6%98%8E%E6%89%8B%E5%86%8C)
 
+
+### docker
+
+[docker中文社区](http://www.docker.org.cn/book/install.html)
 ### 其它
 
 [IT eBooks](http://www.it-ebooks.info/book/4781/)
