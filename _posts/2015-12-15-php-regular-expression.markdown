@@ -432,6 +432,33 @@ if(preg_match('/a.*?b/', 'aabab', $matches)) {
 
 为什么第一个匹配是aab（第一到第三个字符）而不是ab（第四到第五个字符）？简单地说，因为正则表达式有另 一条规则，比懒惰／贪婪规则的优先级更高：最先开始的匹配拥有最高的优先权——`The match that begins earliest wins`。
 
+其他例子：
+{% highlight bash startinline %}  
+[root@kaifa8 unitTest]# psysh 
+Psy Shell v0.6.1 (PHP 5.5.29 — cli) by Justin Hileman
+>>> $status = preg_match('/(\d.){1,2}/', '1.2.', $matches);
+=> 1
+>>> var_dump($matches);
+array(2) {
+  [0] =>
+  string(4) "1.2."
+  [1] =>
+  string(2) "2."
+}
+=> null
+>>> $status = preg_match('/(\d.){1,2}?/', '1.2.', $matches);
+=> 1
+>>> var_dump($matches);
+array(2) {
+  [0] =>
+  string(2) "1."
+  [1] =>
+  string(2) "1."
+}
+=> null
+>>> 
+
+{% endhighlight %}
 
 
 ### 内部选项设置
