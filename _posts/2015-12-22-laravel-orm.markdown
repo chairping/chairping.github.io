@@ -427,6 +427,16 @@ $users = $group->users()->select('nickname', 'email')->get();
 
 
 $group->users() instanceof Illuminate\Database\Eloquent\Relations\BelongsToMany
+
+//三
+$normalGroup = $this->model->normal()->whereHas('groupUser', function($q) use($uid){
+        $q->where('user_id', $uid);
+    })->get()->toArray();
+    
+$group->users()->select('users.photo', 'group_user.group_id', 'group_user.user_id')->chunk(100, function($uesrs) use (&$result){
+        $result = array_merge($result, $uesrs->toArray());
+    });
+ 
 {% endhighlight %}
 
 #### 远程关系
