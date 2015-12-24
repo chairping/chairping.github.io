@@ -18,6 +18,59 @@ Composer是PHP的一个依赖管理工具。它允许你申明项目所依赖的
 下载compsoer `curl -sS https://getcomposer.org/installer | php`  
 直接移动下载下来的composer.phar到bin目录下，`mv composer.phar /usr/local/bin/composer` 这样我们可直接执行compoer命令
 
+### composer.json 
+
+[composer.json 架构](http://docs.phpcomposer.com/04-schema.html#package-name)
+
+```
+{
+    "name": "react/promise",    //"供应商名称/项目名称": "版本"， 
+    "description": "PHP",       // 描述
+    "type": "package",          // 包的安装类型 library、project、metapackage、composer-plugin
+    "keywords": [               // 该包相关的关键词的数组。这些可用于搜索和过滤。
+        "xx x",
+        "php",
+        "async"
+    ],   
+    "license": "MIT",           // 许可协议 Apache-2.0、BSD-2-Clause、BSD-3-Clause、MIT等
+    "authors": [                // 作者，name: 作者的姓名，通常使用真名。  email: 作者的 email 地址。homepage: 作者主页的 URL 地址。role: 该作者在此项目中担任的角色（例：开发人员 或 翻译）。
+        {"name": "Jan Sorgalla", "email": "jsorgalla@gmail.com"}
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "suggest": {                // 建议安装的包
+            "monolog/monolog": "Allows more advanced logging of the application flow"
+    },
+    "autoload": {               // 自动加载映射。
+        "psr-4": {
+            "React\\Promise\\": "src/"
+        },
+        "psr-0": {
+            "Monolog\\": "src/",
+            "Vendor\\Namespace\\": "src/",
+            "Vendor_Namespace_": "src/"
+        },
+        "classmap": ["src/", "lib/", "Something.php"],//引用的所有组合，都会在 install/update 过程中生成，并存储到 vendor/composer/autoload_classmap.php 文件中。
+        "files": ["src/functions_include.php"]  //每次请求时都要载入某些文件
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "2.0-dev"
+        }
+    }
+        
+    "require": {  
+        // 
+        // 版本可选后缀 -dev、-patch、-alpha、-beta 或 -RC 例 1.0.0-dev，1.0.0-alpha3，1.0.0-beta2，1.0.0-RC5
+        "monolog/monolog": "1.2.*" 
+    },
+    "autoload": {
+        "psr-0": { "Symfony\\Component\\Yaml\\": "" }
+    },
+}
+```
+
 ### 使用
 
 * 根目录初始化(在根目录www下创建一个`composer.json`) 

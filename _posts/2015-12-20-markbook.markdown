@@ -53,6 +53,10 @@ date:       2015-12-20 17:50
 
 [redis持久化和常见故障](https://segmentfault.com/a/1190000004135982)
 
+[关于cgi、FastCGI、php-fpm、php-cgi](http://my.oschina.net/jingxing05/blog/267695) 
+
+[PHP异步编程简述](http://www.huyanping.cn/php%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B%E7%AE%80%E8%BF%B0/)
+
 ### GIT
 
 [GIT BOOK](http://git-scm.com/book/zh/v1  "Pro Git book")
@@ -67,6 +71,7 @@ date:       2015-12-20 17:50
 ### docker
 
 [docker中文社区](http://www.docker.org.cn/book/install.html)
+
 ### 其它
 
 [IT eBooks](http://www.it-ebooks.info/book/4781/)
