@@ -106,3 +106,13 @@ define ('CURLMSG_DONE', 1);
 {% highlight php startinline %}  
 
 {% endhighlight %}
+
+#### curl_multi_select - 运行当前 cURL 句柄的子连接
+
+处理在栈中的每一个句柄。无论该句柄需要读取或写入数据都可调用此方法。 
+`int curl_multi_exec ( resource $mh , int &$still_running )`
+mh              由 curl_multi_init() 返回的 cURL 多个句柄。
+still_running   一个用来判断操作是否仍在执行的标识的引用。
+
+
+[php curl_multi_select 死循环原因及相应处理办法](http://blog.marchtea.com/archives/109)
