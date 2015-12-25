@@ -95,9 +95,15 @@ date:       2015-12-20 17:50
 
 [Web缓存机制系列2 – Web浏览器的缓存机制](http://www.alloyteam.com/2012/03/web-cache-2-browser-cache/)
 
-[GitHub上README写法暨GFM语法解读 ](http://blog.csdn.net/guodongxiaren/article/details/23690801)
+[GitHub上README写法暨GFM语法解读](http://blog.csdn.net/guodongxiaren/article/details/23690801)
 
 ### 开发工具
 
 [sublime 指导](http://www.cnblogs.com/figure9/p/sublime-text-complete-guide.html)
 
+### php开源项目
+
+[PHP-multi-curl](https://github.com/jmathai/php-multi-curl)  High performance PHP curl wrapper to make parallel HTTP calls
+[php-curl-class](https://github.com/php-mod/curl)            简单的culr封装库
+[Dir - Directory Scanner](https://github.com/crysalead/dir)  简单的目录遍历库
+[Guzzle, PHP HTTP client](https://github.com/guzzle/guzzle)  Guzzle, PHP HTTP client

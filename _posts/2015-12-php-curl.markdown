@@ -7,7 +7,7 @@ date:       2015-12-24 12:50
 
 ### curl预定义常量
 
-[libcurl error codes ](http://curl.haxx.se/libcurl/c/libcurl-errors.html)
+[libcurl error codes](http://curl.haxx.se/libcurl/c/libcurl-errors.html)
 
 {% highlight php startinline %}  
 define ('CURLINFO_PRIVATE', 1048597);                     //
@@ -29,14 +29,14 @@ define ('CURLE_COULDNT_CONNECT', 7);                // Failed to connect() to ho
 define ('CURLE_FTP_WEIRD_SERVER_REPLY', 8);         //  After connecting to a FTP server, libcurl expects to get a certain reply back. This error code implies that it got a strange or bad reply. The given remote server is probably not an OK FTP server. 
 define ('CURLE_FTP_ACCESS_DENIED', 9);                     //
 define ('CURLE_FTP_USER_PASSWORD_INCORRECT', 10);                     //
-define ('CURLE_FTP_WEIRD_PASS_REPLY', 11);                     //
+define ('CURLE_FTP_WEIRD_PASS_REPLY', 11);                     //After having sent the FTP password to the server, libcurl expects a proper reply. This error code indicates that an unexpected code was returned. 
 define ('CURLE_FTP_WEIRD_USER_REPLY', 12);                     //
 define ('CURLE_FTP_WEIRD_PASV_REPLY', 13);                     //
 define ('CURLE_FTP_WEIRD_227_FORMAT', 14);                     //
 define ('CURLE_FTP_CANT_GET_HOST', 15);                     //
 define ('CURLE_FTP_CANT_RECONNECT', 16);                     //
 define ('CURLE_FTP_COULDNT_SET_BINARY', 17);                     //
-define ('CURLE_PARTIAL_FILE', 18);                     //
+define ('CURLE_PARTIAL_FILE', 18);                     // A file transfer was shorter or larger than expected. This happens when the server first reports an expected transfer size, and then delivers data that doesn't match the previously given size. 
 define ('CURLE_FTP_COULDNT_RETR_FILE', 19);                     //
 define ('CURLE_FTP_WRITE_ERROR', 20);                     //
 define ('CURLE_FTP_QUOTE_ERROR', 21);                     //
@@ -92,7 +92,7 @@ define ('CURL_NETRC_REQUIRED', 2);                     //
 define ('CURL_HTTP_VERSION_NONE', 0);                     //
 define ('CURL_HTTP_VERSION_1_0', 1);                     //
 define ('CURL_HTTP_VERSION_1_1', 2);                     //
-define ('CURLM_CALL_MULTI_PERFORM', -1);                     //
+define ('CURLM_CALL_MULTI_PERFORM', -1); //This is not really an error. It means you should call curl_multi_perform again without doing select() or similar in between. Before version 7.20.0 this could be returned by curl_multi_perform, but in later versions this return code is never used. 
 define ('CURLM_OK', 0);                     //
 define ('CURLM_BAD_HANDLE', 1);                     //
 define ('CURLM_BAD_EASY_HANDLE', 2);                     //
