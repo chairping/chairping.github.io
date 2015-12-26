@@ -5,3 +5,120 @@ subtitle:  ""
 date:       2015-12-20 17:50
 ---
 
+### 初始数组
+ 
+{% highlight php startinline %} 
+ $arr = [
+    'key1' => [
+        'val11', 'val12'
+    ],
+    'key2' => [
+        'val21', 'val22'
+    ],
+    'key3' => [
+        'val31', 'val32'
+    ],
+];
+{% endhighlight %}
+
+### array_walk
+使用用户自定义函数对数组中的每个元素做回调处理
+使用场景：　改变原有数组的值
+{% highlight php startinline %} 
+//　遍历一维元素
+array_walk($arr, function(&$row, $key, $prefix) use ($a) {
+    $row[] = $prefix . $key . $a;
+}, 'prefix');
+// output:
+// string 'key1:array (0 => 'val11',1 => 'val12',) prefix' (length=53)
+// string 'key2:array (0 => 'val21',1 => 'val22',) prefix' (length=53)
+// string 'key3:array (0 => 'val31',1 => 'val32',) prefix' (length=53)
+
+// 遍历$arr
+array_walk($arr, function(&$row, $key, $prefix) {
+    $row[] = $prefix . $key;
+}, 'prefix');
+
+//等同于：
+$prefix = 'prefix';
+foreach($arr as $key => &$row) {
+    $row[] = $prefix . $key;
+}
+var_dump($arr);
+//output:
+//array (size=3)
+//  'key1' => 
+//    array (size=3)
+//      0 => string 'val11' (length=5)
+//      1 => string 'val12' (length=5)
+//      2 => string 'prefixkey1' (length=10)
+//  'key2' => 
+//    array (size=3)
+//      0 => string 'val21' (length=5)
+//      1 => string 'val22' (length=5)
+//      2 => string 'prefixkey2' (length=10)
+//  'key3' => 
+//    array (size=3)
+//      0 => string 'val31' (length=5)
+//      1 => string 'val32' (length=5)
+//      2 => string 'prefixkey3' (length=10)
+{% endhighlight %}
+
+### array_walk_recursive 
+
+对数组中的每个成员递归地应用用户函数
+{% highlight php startinline %} 
+$fruits = [
+    'sweet' => [
+        'a' => 'apple',
+        'b' => 'banana'
+    ],
+    'sour' => 'lemon'
+];
+//　回调函数处理叶节点
+array_walk_recursive($fruits, function($item, $key) {
+    echo "$key holds $item<br />";
+});
+// output:
+//a holds apple
+//b holds banana
+//sour holds lemon
+{% endhighlight %}
+ 
+### array_map
+
+将回调函数作用到给定数组的单元上 
+使用场景：　返回一个新的数组
+{% highlight php startinline %} 
+$b = array_map(function($row){
+    return $row * 2;
+}, [1,2,3,4,6]);
+// var_dump($b);
+//array (size=5)
+//  0 => int 2
+//  1 => int 4
+//  2 => int 6
+//  3 => int 8
+//  4 => int 12
+
+{% endhighlight %}
+
+### array_reduce
+
+用回调函数迭代地将数组简化为单一的值
+{% highlight php startinline %} 
+$a = array(1, 2, 3);
+$b = array_reduce($a, function($tmpContainer, $row) {
+    $tmpContainer *= $row;
+    return $tmpContainer;
+}, 10);
+// var_dump($b);
+// output:
+// int 60
+
+// 过程为，　$b = 10 * 1 * 2 * 3
+// $tmpContainer 为临时容器　存储计算过的值
+// $row　为数组$a里的原理
+// 10 为初始值，即tmpContainer的初始化
+
+{% endhighlight %}
