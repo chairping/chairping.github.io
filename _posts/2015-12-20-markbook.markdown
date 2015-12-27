@@ -57,6 +57,12 @@ date:       2015-12-20 17:50
 
 [PHP异步编程简述](http://www.huyanping.cn/php%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B%E7%AE%80%E8%BF%B0/)
 
+[PHP编程中的并发](segmentfault.com/a/1190000004069411?utm_source=Weibo&utm_medium=shareLink&utm_campaign=socialShare)
+
+[Rolling cURL: PHP并发最佳实践](http://blogread.cn/it/article/5501?f=wb)
+
+[超越PHP](http://toutiao.io/subjects/21834) 技术分享
+
 ### GIT
 
 [GIT BOOK](http://git-scm.com/book/zh/v1  "Pro Git book")
@@ -66,6 +72,8 @@ date:       2015-12-20 17:50
 [常用 Git 命令清单](http://www.ruanyifeng.com/blog/2015/12/git-cheat-sheet.html)
 
 [Git超级简明手册](https://github.com/shendl1978/blog/wiki/Git%E8%B6%85%E7%BA%A7%E7%AE%80%E6%98%8E%E6%89%8B%E5%86%8C)
+
+
 
 
 ### docker
