@@ -1,0 +1,80 @@
+---
+layout:    post
+title:     "Lumen源码阅读－－－容器"
+subtitle:  "Container"
+date:       2016-06-22 21:50
+---
+
+###   ioc容器 
+
+个人理解容器是一个魔法仓库，里面存放存放着获取货物标签和货物实体。当你需要什么货物的时候，可以直接从仓库中获取。
+
+###  容器注册
+ 
+{% highlight php startinline %}
+    
+    /**
+    * 向容器中注册    
+    * @param  string|array  $abstract　表示抽象类型
+    * 　　　　　　　1. 　string  类名称    2.   array  [类名称，　别名]       
+    * @param  \Closure|string|null  $concrete 　表示具体类型　如果是string|null 最终转化成匿名函数保存  
+    * @param  $shared   true 表示共享　false　相反
+    */
+    public function bind($abstract, $concrete = null, $shared = false)
+    {
+        // 格式类名字符串　
+        $abstract = $this->normalize($abstract);
+        $concrete = $this->normalize($concrete);
+
+        // 如果 abstract 是数组，　则就认为一维数组 key为实际类名　　value 为别名　
+        //　也即动态设置别名 获取的时候可直接通过　别名　获取　
+        if (is_array($abstract)) {
+            list($abstract, $alias) = $this->extractAlias($abstract);
+            $this->alias($abstract, $alias);
+        }
+        
+        //　清楚上次绑定的Container::instances Container::alias对应缓存的数据　
+        //  bind 可多次绑定相同的类型，所以第n(n>1)次绑定的时候都要清除之前绑定的数据
+        //  bindIf方法　可防止多次绑定，　效果：　如果该类型已经绑定过了　则不进行该次绑定操作
+        $this->dropStaleInstances($abstract);
+
+        // 如果具体类型为null 则设置具体类型为抽象类型
+        if (is_null($concrete)) {
+            $concrete = $abstract;
+        }
+
+        // 如果具体类型非匿名函数　则格式化成匿名函数
+        if (! $concrete instanceof Closure) {
+            $concrete = $this->getClosure($abstract, $concrete);
+        }
+
+        // 记录绑定类型详情
+        // 1 concrete　　匿名函数　function($c[, $param]) {}
+        // 2 shared true 为共享　　当share 为true时，　make操作会把该匿名函数返回的结果保存到Container::instances 中，　达到共享效果
+        $this->bindings[$abstract] = compact('concrete', 'shared');
+
+        // If the abstract type was already resolved in this container we'll fire the
+        // rebound listener so that any objects which have already gotten resolved
+        // can have their copy of the object updated via the listener callbacks.
+        // 如果抽象类型解析过　即通过make操作(make操作有开发人员调用　和　容器自动解析两种)
+        // 则更新该类型数据　和　触发监听回调(如果有设置的话)
+        if ($this->resolved($abstract)) {
+            $this->rebound($abstract);
+        }
+    }
+    
+    protected function getClosure($abstract, $concrete)
+    {
+        // $c 表示　容器实例　$parameters 表示参数　　
+        // 该函数返回的匿名函数保存在　$this->bindings[$abstract] = ['concrete' => 匿名函数]
+        // 当解析的时候，　即make操作，　会执行该匿名函数　最终返回我们需要的数据。
+        // 
+        return function ($c, $parameters = []) use ($abstract, $concrete) {
+            // 解析　
+            $method = ($abstract == $concrete) ? 'build' : 'make';
+   
+            return $c->$method($concrete, $parameters);
+        };
+    }
+{% endhighlight %}
+
