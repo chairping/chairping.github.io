@@ -7,18 +7,155 @@ date:       2016-3-22 21:50
 
 ###   ioc容器 
 
-个人理解容器是一个魔法仓库，里面存放存放着获取货物标签和货物实体。当你需要什么货物的时候，可以直接从仓库中获取。
 
-###  容器注册
+###  Illuminate\Container\Container.php
  
 {% highlight php startinline %}
+    
+class Container implements ArrayAccess, ContainerContract
+{
+
+    protected static $instance;
+
+    /**
+     * An array of the types that have been resolved.
+     *　该数组标示　注册的服务是否已解析
+     * @var array
+     */
+    protected $resolved = [];
+
+    /**
+     * The container's bindings.
+     *　容器中的绑定
+     * @var array
+     */
+    protected $bindings = [];
+
+    /**
+     * The container's shared instances.
+     *　容器中的共享实例
+     * @var array
+     */
+    protected $instances = [];
+
+    /**
+     * The registered type aliases.
+     *
+     * @var array
+     */
+    protected $aliases = [];
+
+    /**
+     * The extension closures for services.
+     *
+     * @var array
+     */
+    protected $extenders = [];
+
+    /**
+     * All of the registered tags.
+     *
+     * @var array
+     */
+    protected $tags = [];
+
+    /**
+     *　该栈的数据是临时保存的　等解析结束后会被清空　提供给上下文绑定操作
+     * @var array
+     */
+    protected $buildStack = [];
+
+    /**
+     *　上下文绑定关系数组　
+     * @var array
+     */
+    public $contextual = [];
+
+    /**
+     * @var array
+     */
+    protected $reboundCallbacks = [];
+
+    /**
+     * @var array
+     */
+    protected $globalResolvingCallbacks = [];
+
+    /**
+     * @var array
+     */
+    protected $globalAfterResolvingCallbacks = [];
+
+    /**
+     * @var array
+     */
+    protected $resolvingCallbacks = [];
+
+    /**
+     * @var array
+     */
+    protected $afterResolvingCallbacks = [];
+
+    /**
+     * 定义一个上下文绑定
+     * @param  string  $concrete
+     * @return \Illuminate\Contracts\Container\ContextualBindingBuilder
+     */
+    public function when($concrete)
+    {
+        $concrete = $this->normalize($concrete);
+
+        return new ContextualBindingBuilder($this, $concrete);
+    }
+
+    /**
+     * bound 是　bind 过去式　意味着提供的抽象类型是否已经绑定过了
+     *
+     * @param  string  $abstract
+     * @return bool
+     */
+    public function bound($abstract)
+    {
+        $abstract = $this->normalize($abstract);
+
+        return isset($this->bindings[$abstract]) || isset($this->instances[$abstract]) || $this->isAlias($abstract);
+    }
+
+    /**
+     *　判断抽象类型是否已经解析过的　
+     * @param  string  $abstract
+     * @return bool
+     */
+    public function resolved($abstract)
+    {
+        $abstract = $this->normalize($abstract);
+
+        if ($this->isAlias($abstract)) {
+            $abstract = $this->getAlias($abstract);
+        }
+
+        return isset($this->resolved[$abstract]) || isset($this->instances[$abstract]);
+    }
+
+    /**
+     * Determine if a given string is an alias.
+     *　
+     * @param  string  $name
+     * @return bool
+     */
+    public function isAlias($name)
+    {
+        return isset($this->aliases[$this->normalize($name)]);
+    }
     
     /**
     * 向容器中注册    
     * @param  string|array  $abstract　表示抽象类型
     * 　　　　　　　1. 　string  类名称    2.   array  [类名称，　别名]       
     * @param  \Closure|string|null  $concrete 　表示具体类型　如果是string|null 最终转化成匿名函数保存  
-    * @param  $shared   true 表示共享　false　相反
+    * @param bool  $shared   
+	*			true 表示共享, 每次返回同一个对象
+	*	　		false　每次返回新的对象
     */
     public function bind($abstract, $concrete = null, $shared = false)
     {
@@ -76,11 +213,19 @@ date:       2016-3-22 21:50
             return $c->$method($concrete, $parameters);
         };
     }
+    
+    
 {% endhighlight %}
+	
+　　１．　一个参数
+	app()->bind(class_name);　//表示 使用app('class_name')；　class_name通常是　能实例化的类的类名　获取　别名　
+	
+	２.  两个参数   
+	app()->bind(abstract, class_name);　// 通常第一个表示接口名称(或其别名)　第二个表示实现该接口的类名称。
+　　
+	例子：
 
-app()->bind(class_name);
-app()->bind(abstract, class_name);
-app()->bind(abstract, function() {
-    return new Object;.ku
-});
+	app()->bind(abstract, function() {
+		return new Object;
+	});
 
