@@ -6,7 +6,41 @@ date:       2016-3-23 21:50
 ---
 
 ###   ioc容器 
+ioc容器主要注册对象至容器中，当你调用的时候，可直接从容器中获取对象，方便开发，同时如果业务上或者其他原因需要使用另外一个对象的情况下，
+可直接在注册的地方直接修改，不需要改动现有的业务逻辑，便于管理。
 
+#### 一个简单的容器
+    
+    calss Container {
+        private static $containerArr = [];
+        
+        public static function resigster($name, $value) {
+            $this->containerArr[$name] = $value;
+        } 
+        
+        public static function get($name) {
+           $container = $this->containerArr[$name];
+           
+            if (! $container instanceof Closure) {
+               return $container();
+            } else {
+                return $container;
+            }
+        }
+    }
+    
+    Container::resigster('request', function() {
+        return new Request;
+    });
+    
+    Container::get('request'); // 每次返回一个新的对象
+    
+    Container::resigster('object', new Object); // get的时候每次返回同一个对象
+
+上面的代码实现了一个简单的容器. 通过匿名函数来保存　实例化对象的代码，当你调用的时候才会执行实例化对象操作。
+该实现相对比较简单，主要是为了理解容器的基本概念。
+
+lumen实现的容器很强大，　下面会通过源码介绍lumen容器的强大功能
 
 ###  Illuminate\Container\Container.php
  
@@ -18,16 +52,12 @@ class Container implements ArrayAccess, ContainerContract
     protected static $instance;
 
     /**
-     * An array of the types that have been resolved.
      *　该数组标示　注册的服务是否已解析
-     * @var array
      */
     protected $resolved = [];
 
     /**
-     * The container's bindings.
      *　容器中的绑定
-     * @var array
      */
     protected $bindings = [];
 
@@ -67,7 +97,6 @@ class Container implements ArrayAccess, ContainerContract
 
     /**
      *　上下文绑定关系数组　
-     * @var array
      */
     public $contextual = [];
 
@@ -110,14 +139,12 @@ class Container implements ArrayAccess, ContainerContract
 
     /**
      * bound 是　bind 过去式　意味着提供的抽象类型是否已经绑定过了
-     *
      * @param  string  $abstract
      * @return bool
      */
     public function bound($abstract)
     {
         $abstract = $this->normalize($abstract);
-
         return isset($this->bindings[$abstract]) || isset($this->instances[$abstract]) || $this->isAlias($abstract);
     }
 
@@ -139,7 +166,6 @@ class Container implements ArrayAccess, ContainerContract
 
     /**
      * Determine if a given string is an alias.
-     *　
      * @param  string  $name
      * @return bool
      */
@@ -192,7 +218,7 @@ class Container implements ArrayAccess, ContainerContract
 
         // If the abstract type was already resolved in this container we'll fire the
         // rebound listener so that any objects which have already gotten resolved
-        // can have their copy of the object updated via the listener callbacks.
+        // can have their copy of the object updated via the liste$thisner callbacks.
         // 如果抽象类型解析过　即通过make操作(make操作有开发人员调用　和　容器自动解析两种)
         // 则更新该类型数据　和　触发监听回调(如果有设置的话)
         if ($this->resolved($abstract)) {
@@ -205,7 +231,6 @@ class Container implements ArrayAccess, ContainerContract
         // $c 表示　容器实例　$parameters 表示参数　　
         // 该函数返回的匿名函数保存在　$this->bindings[$abstract] = ['concrete' => 匿名函数]
         // 当解析的时候，　即make操作，　会执行该匿名函数　最终返回我们需要的数据。
-        // 
         return function ($c, $parameters = []) use ($abstract, $concrete) {
             // 解析　
             $method = ($abstract == $concrete) ? 'build' : 'make';
@@ -214,18 +239,1013 @@ class Container implements ArrayAccess, ContainerContract
         };
     }
     
+    /**
+         * Add a contextual binding to the container.
+         *
+         * @param  string  $concrete
+         * @param  string  $abstract
+         * @param  \Closure|string  $implementation
+         * @return void
+         */
+        public function addContextualBinding($concrete, $abstract, $implementation)
+        {
+            $this->contextual[$this->normalize($concrete)][$this->normalize($abstract)] = $this->normalize($implementation);
+        }
+    
+        /**
+         * Register a binding if it hasn't already been registered.getContextualConcrete
+         *
+         * @param  string  $abstract
+         * @param  \Closure|string|null  $concrete
+         * @param  bool  $shared
+         * @return void
+         */
+        public function bindIf($abstract, $concrete = null, $shared = false)
+        {
+            if (! $this->bound($abstract)) {
+                $this->bind($abstract, $concrete, $shared);
+            }
+        }
+    
+        /**
+         * Register a shared binding in the container.
+         *
+         * @param  string|array  $abstract
+         * @param  \Closure|string|null  $concrete
+         * @return void
+         */
+        public function singleton($abstract, $concrete = null)
+        {
+            $this->bind($abstract, $concrete, true);
+        }
+    
+        /**
+         * Wrap a Closure such that it is shared.
+         *
+         * @param  \Closure  $closure
+         * @return \Closure
+         */
+        public function share(Closure $closure)
+        {
+            return function ($container) use ($closure) {
+                // We'll simply declare a static variable within the Closures and if it has
+                // not been set we will execute the given Closures to resolve this value
+                // and return it back to these consumers of the method as an instance.
+                static $object;
+    
+                if (is_null($object)) {
+                    $object = $closure($container);
+                }
+    
+                return $object;
+            };
+        }
+    
+        /**
+         * "Extend" an abstract type in the container.
+         *
+         * @param  string    $abstract
+         * @param  \Closure  $closure
+         * @return void
+         *
+         * @throws \InvalidArgumentException
+         */
+        public function extend($abstract, Closure $closure)
+        {
+            $abstract = $this->normalize($abstract);
+    
+            if (isset($this->instances[$abstract])) {
+                $this->instances[$abstract] = $closure($this->instances[$abstract], $this);
+    
+                $this->rebound($abstract);
+            } else {
+                $this->extenders[$abstract][] = $closure;
+            }
+        }
+    
+        /**
+         * Register an existing instance as shared in the container.
+         *
+         * @param  string  $abstract
+         * @param  mixed   $instance
+         * @return void
+         */
+        public function instance($abstract, $instance)
+        {
+            $abstract = $this->normalize($abstract);
+    
+            // First, we will extract the alias from the abstract if it is an array so we
+            // are using the correct name when binding the type. If we get an alias it
+            // will be registered with the container so we can resolve it out later.
+            if (is_array($abstract)) {
+                list($abstract, $alias) = $this->extractAlias($abstract);
+    
+                $this->alias($abstract, $alias);
+            }
+    
+            unset($this->aliases[$abstract]);
+    
+            // We'll check to determine if this type has been bound before, and if it has
+            // we will fire the rebound callbacks registered with the container and it
+            // can be updated with consuming classes that have gotten resolved here.
+            $bound = $this->bound($abstract);
+    
+            $this->instances[$abstract] = $instance;
+    
+            if ($bound) {
+                $this->rebound($abstract);
+            }
+        }
+    
+        /**
+         * Assign a set of tags to a given binding.
+         *
+         * @param  array|string  $abstracts
+         * @param  array|mixed   ...$tags
+         * @return void
+         */
+        public function tag($abstracts, $tags)
+        {
+            $tags = is_array($tags) ? $tags : array_slice(func_get_args(), 1);
+    
+            foreach ($tags as $tag) {
+                if (! isset($this->tags[$tag])) {
+                    $this->tags[$tag] = [];
+                }
+    
+                foreach ((array) $abstracts as $abstract) {
+                    $this->tags[$tag][] = $this->normalize($abstract);
+                }
+            }
+        }
+    
+        /**
+         * Resolve all of the bindings for a given tag.
+         * 解析标签
+         * @param  string  $tag
+         * @return array
+         */
+        public function tagged($tag)
+        {
+            $results = [];
+    
+            if (isset($this->tags[$tag])) {
+                foreach ($this->tags[$tag] as $abstract) {
+                    $results[] = $this->make($abstract);
+                }
+            }
+    
+            return $results;
+        }
+    
+        /**
+         * 设置别名
+         */
+        public function alias($abstract, $alias)
+        {
+            $this->aliases[$alias] = $this->normalize($abstract);
+        }
+    
+        /**
+         * 解析自定义别名
+         */
+        protected function extractAlias(array $definition)
+        {
+            return [key($definition), current($definition)];
+        }
+    
+        /**
+         * 当该抽象类型重新绑定的时候　触发该回调函数
+         * @return mixed
+         */
+        public function rebinding($abstract, Closure $callback)
+        {
+            $this->reboundCallbacks[$this->normalize($abstract)][] = $callback;
+    
+            if ($this->bound($abstract)) {
+                return $this->make($abstract);
+            }
+        }
+    
+        /**
+         * Refresh an instance on the given target and method.
+         *
+         * @param  string  $abstract
+         * @param  mixed   $target
+         * @param  string  $method
+         * @return mixed
+         */
+        public function refresh($abstract, $target, $method)
+        {
+            return $this->rebinding($this->normalize($abstract), function ($app, $instance) use ($target, $method) {
+                $target->{$method}($instance);
+            });
+        }
+    
+        /**
+         * Fire the "rebound" callbacks for the given abstract type.
+         *
+         * @param  string  $abstract
+         * @return void
+         */
+        protected function rebound($abstract)
+        {
+            $instance = $this->make($abstract);
+    
+            foreach ($this->getReboundCallbacks($abstract) as $callback) {
+                call_user_func($callback, $this, $instance);
+            }
+        }
+    
+        /**
+         * Get the rebound callbacks for a given type.
+         *
+         * @param  string  $abstract
+         * @return array
+         */
+        protected function getReboundCallbacks($abstract)
+        {
+            if (isset($this->reboundCallbacks[$abstract])) {
+                return $this->reboundCallbacks[$abstract];
+            }
+    
+            return [];
+        }
+    
+        /**
+         * Wrap the given closure such that its dependencies will be injected when executed.
+         *
+         * @param  \Closure  $callback
+         * @param  array  $parameters
+         * @return \Closure
+         */
+        public function wrap(Closure $callback, array $parameters = [])
+        {
+            return function () use ($callback, $parameters) {
+                return $this->call($callback, $parameters);
+            };
+        }
+    
+        /**
+         * Call the given Closure / class@method and inject its dependencies.
+         *
+         * @param  callable|string  $callback
+         * @param  array  $parameters
+         * @param  string|null  $defaultMethod
+         * @return mixed
+         */
+        public function call($callback, array $parameters = [], $defaultMethod = null)
+        {
+            if ($this->isCallableWithAtSign($callback) || $defaultMethod) {
+                return $this->callClass($callback, $parameters, $defaultMethod);
+            }
+    
+            $dependencies = $this->getMethodDependencies($callback, $parameters);
+    
+            return call_user_func_array($callback, $dependencies);
+        }
+    
+        /**
+         * Determine if the given string is in Class@method syntax.
+         *
+         * @param  mixed  $callback
+         * @return bool
+         */
+        protected function isCallableWithAtSign($callback)
+        {
+            return is_string($callback) && strpos($callback, '@') !== false;
+        }
+    
+        /**
+         * Get all dependencies for a given method.
+         *
+         * @param  callable|string  $callback
+         * @param  array  $parameters
+         * @return array
+         */
+        protected function getMethodDependencies($callback, array $parameters = [])
+        {
+            $dependencies = [];
+    
+            foreach ($this->getCallReflector($callback)->getParameters() as $parameter) {
+                $this->addDependencyForCallParameter($parameter, $parameters, $dependencies);
+            }
+    
+            return array_merge($dependencies, $parameters);
+        }
+    
+        /**
+         * Get the proper reflection instance for the given callback.
+         *
+         * @param  callable|string  $callback
+         * @return \ReflectionFunctionAbstract
+         */
+        protected function getCallReflector($callback)
+        {
+            if (is_string($callback) && strpos($callback, '::') !== false) {
+                $callback = explode('::', $callback);
+            }
+    
+            if (is_array($callback)) {
+                return new ReflectionMethod($callback[0], $callback[1]);
+            }
+    
+            return new ReflectionFunction($callback);
+        }
+    
+        /**
+         * Get the dependency for the given call parameter.
+         *
+         * @param  \ReflectionParameter  $parameter
+         * @param  array  $parameters
+         * @param  array  $dependencies
+         * @return mixed
+         */
+        protected function addDependencyForCallParameter(ReflectionParameter $parameter, array &$parameters, &$dependencies)
+        {
+            if (array_key_exists($parameter->name, $parameters)) {
+                $dependencies[] = $parameters[$parameter->name];
+    
+                unset($parameters[$parameter->name]);
+            } elseif ($parameter->getClass()) {
+                $dependencies[] = $this->make($parameter->getClass()->name);
+            } elseif ($parameter->isDefaultValueAvailable()) {
+                $dependencies[] = $parameter->getDefaultValue();
+            }
+        }
+    
+        /**
+         * Call a string reference to a class using Class@method syntax.
+         *
+         * @param  string  $target
+         * @param  array  $parameters
+         * @param  string|null  $defaultMethod
+         * @return mixed
+         *
+         * @throws \InvalidArgumentException
+         */
+        protected function callClass($target, array $parameters = [], $defaultMethod = null)
+        {
+            $segments = explode('@', $target);
+    
+            // If the listener has an @ sign, we will assume it is being used to delimit
+            // the class name from the handle method name. This allows for handlers
+            // to run multiple handler methods in a single class for convenience.
+            $method = count($segments) == 2 ? $segments[1] : $defaultMethod;
+    
+            if (is_null($method)) {
+                throw new InvalidArgumentException('Method not provided.');
+            }
+    
+            return $this->call([$this->make($segments[0]), $method], $parameters);
+        }
+    
+        /**
+         * 从容器中解析并获取所需的实例
+         */
+        public function make($abstract, array $parameters = [])
+        {
+            $abstract = $this->getAlias($this->normalize($abstract));
+    
+            // If an instance of the type is currently being managed as a singleton we'll
+            // just return an existing instance instead of instantiating new instances
+            // so the developer can keep using the same objects instance every time.
+            // 如果已存在　实例中则直接返回
+            if (isset($this->instances[$abstract])) {
+                return $this->instances[$abstract];
+            }
+    
+            // 获取匿名函数
+            $concrete = $this->getConcrete($abstract);
+    
+            // We're ready to instantiate an instance of the concrete type registered for
+            // the binding. This will instantiate the types, as well as resolve any of
+            // its "nested" dependencies recursively until all have gotten resolved.
+            if ($this->isBuildable($concrete, $abstract)) {
+                $object = $this->build($concrete, $parameters);
+            } else {
+                $object = $this->make($concrete, $parameters);
+            }
+    
+            // If we defined any extenders for this type, we'll need to spin through them
+            // and apply them to the object being built. This allows for the extension
+            // of services, such as changing configuration or decorating the object.
+            foreach ($this->getExtenders($abstract) as $extender) {
+                $object = $extender($object, $this);
+            }
+    
+            // If the requested type is registered as a singleton we'll want to cache off
+            // the instances in "memory" so we can return it later without creating an
+            // entirely new instance of an object on each subsequent request for it.
+    
+            // 如果绑定是共享类型　则结果保存instances变量中　达到共享
+            if ($this->isShared($abstract)) {
+                $this->instances[$abstract] = $object;
+            }
+    
+            $this->fireResolvingCallbacks($abstract, $object);
+    
+            $this->resolved[$abstract] = true;
+    
+            return $object;
+        }
+    
+        /**
+         * Get the concrete type for a given abstract.
+         *
+         * @param  string  $abstract
+         * @return mixed   $concrete
+         */
+        protected function getConcrete($abstract)
+        {
+            // 获取上下文关系　设置when()->needs()->give();的时候使用
+            if (! is_null($concrete = $this->getContextualConcrete($abstract))) {
+                return $concrete;
+            }
+    
+            // If we don't have a registered resolver or concrete for the type, we'll just
+            // assume each type is a concrete name and will attempt to resolve it as is
+            // since the container should b$abstracte able to resolve concretes automatically.
+            if (! isset($this->bindings[$abstract])) {
+                return $abstract;
+            }
+    
+            return $this->bindings[$abstract]['concrete'];
+        }
+    
+        /**
+         * Get the contextual concrete binding for the given abstract.
+         *
+         * @param  string  $abstract
+         * @return string|null
+         */
+        protected function getContextualConcrete($abstract)
+        {
+            if (isset($this->contextual[end($this->buildStack)][$abstract])) {
+                return $this->contextual[end($this->buildStack)][$abstract];
+            }
+        }
+    
+        /**
+         *　统一类名称，　因为这些类名称会被记录起来　用于一系列的获取判断使用，　所以要统一格式
+         */
+        protected function normalize($service)
+        {
+            return is_string($service) ? ltrim($service, '\\') : $service;
+        }
+    
+        /**
+         * Get the extender callbacks for a given type.
+         *
+         * @param  string  $abstract
+         * @return array
+         */
+        protected function getExtenders($abstract)
+        {
+            if (isset($this->extenders[$abstract])) {
+                return $this->extenders[$abstract];
+            }
+    
+            return [];
+        }
+    
+        /**
+         * Instantiate a concrete instance of the given type.
+         *　
+         * @param  string  $concrete
+         * @param  array   $parameters
+         * @return mixed
+         *
+         * @throws \Illuminate\Contracts\Container\BindingResolutionException
+         */
+        public function build($concrete, array $parameters = [])
+        {
+            // 如果是匿名函数　则直接执行该匿名函数并返回结果
+            if ($concrete instanceof Closure) {
+                return $concrete($this, $parameters);
+            }
+    
+            $reflector = new ReflectionClass($concrete);
+    
+            // 如果该具体类　不能实例化　则抛出异常　
+            if (! $reflector->isInstantiable()) {
+                if (! empty($this->buildStack)) {
+                    $previous = implode(', ', $this->buildStack);
+    
+                    $message = "Target [$concrete] is not instantiable while building [$previous].";
+                } else {
+                    $message = "Target [$concrete] is not instantiable.";
+                }
+    
+                throw new BindingResolutionException($message);
+            }
+            // 具体类　入栈　暂且叫解析栈吧　　
+            $this->buildStack[] = $concrete;
+    
+            // 获取构造函数反射类
+            $constructor = $reflector->getConstructor();
+    
+            // 如果在具体类型　没有构造函数，　则说明该类没有依赖其他类　则出栈　直接实例化该类并返回
+            if (is_null($constructor)) {
+                array_pop($this->buildStack);
+    
+                return new $concrete;
+            }
+            // 获取构造函数参数反射类数组
+            $dependencies = $constructor->getParameters();
+    
+            // Once we have all the constructor's parameters we can create each of the
+            // dependency instances and then use the reflection instances to make a
+            // new instance of this class, injecting the created dependencies in.
+            $parameters = $this->keyParametersByArgument(
+                $dependencies, $parameters
+            );
+            // 解析依赖关系
+            $instances = $this->getDependencies(
+                $dependencies, $parameters
+            );
+            // 编译完毕　出栈
+            array_pop($this->buildStack);
+            // 实例化该类 并传递已存在的类
+            return $reflector->newInstanceArgs($instances);
+        }
+    
+        /**
+         * Resolve all of the dependencies from the ReflectionParameters.
+         *　解析所有依赖
+         * @param  array  $parameters　构造函数的参数反射类　非make 传递的数组参数　
+         * @param  array  $primitives　make 传递的数组参数　
+         * @return array
+         */
+        protected function getDependencies(array $parameters, array $primitives = [])
+        {
+            $dependencies = [];
+    
+            foreach ($parameters as $parameter) {
+                // 获取该参数的反射类　如果存在则
+                $dependency = $parameter->getClass();
+    
+                if (array_key_exists($parameter->name, $primitives)) {
+                    $dependencies[] = $primitives[$parameter->name];
+                    //  如果不是类　怎普通处理
+                } elseif (is_null($dependency)) {
+                    $dependencies[] = $this->resolveNonClass($parameter);
+                } else {
+                    // 如果是参数是class 则解析
+                    $dependencies[] = $this->resolveClass($parameter);
+                }
+            }
+    
+            return $dependencies;
+        }
+    
+        /**
+         * Resolve a non-class hinted dependency.
+         *
+         * @param  \ReflectionParameter  $parameter
+         * @return mixed
+         *
+         * @throws \Illuminate\Contracts\Container\BindingResolutionException
+         */
+        protected function resolveNonClass(ReflectionParameter $parameter)
+        {
+            if (! is_null($concrete = $this->getContextualConcrete('$'.$parameter->name))) {
+                if ($concrete instanceof Closure) {
+                    return call_user_func($concrete, $this);
+                } else {
+                    return $concrete;
+                }
+            }
+            // 如果该参数为空　则返回默认值
+            if ($parameter->isDefaultValueAvailable()) {
+                return $parameter->getDefaultValue();
+            }
+    
+            $message = "Unresolvable dependency resolving [$parameter] in class {$parameter->getDeclaringClass()->getName()}";
+    
+            throw new BindingResolutionException($message);
+        }
+    
+        /**
+         * Resolve a class based dependency from the container.
+         *　解析类的依赖性
+         * @param  \ReflectionParameter  $parameter
+         * @return mixed
+         *
+         * @throws \Illuminate\Contracts\Container\BindingResolutionException
+         */
+        protected function resolveClass(ReflectionParameter $parameter)
+        {
+            try {
+                return $this->make($parameter->getClass()->name);
+            }
+    
+            // If we can not resolve the class instance, we will check to see if the value
+            // is optional, and if it is we will return the optional parameter value as
+            // the value of the dependency, similarly to how we do this with scalars.
+            catch (BindingResolutionException $e) {
+                if ($parameter->isOptional()) {
+                    return $parameter->getDefaultValue();
+                }
+    
+                throw $e;
+            }
+        }
+    
+        /**
+         * If extra parameters are passed by numeric ID, rekey them by argument name.
+         *
+         * @param  array  $dependencies
+         * @param  array  $parameters
+         * @return array
+         */
+        protected function keyParametersByArgument(array $dependencies, array $parameters)
+        {
+            foreach ($parameters as $key => $value) {
+                if (is_numeric($key)) {
+                    unset($parameters[$key]);
+                    // 获取参数名称　并重新赋值到parameters中
+                    $parameters[$dependencies[$key]->name] = $value;
+                }
+            }
+    
+            return $parameters;
+        }
+    
+        /**
+         * Register a new resolving callback.
+         *
+         * @param  string    $abstract
+         * @param  \Closure|null  $callback
+         * @return void
+         */
+        public function resolving($abstract, Closure $callback = null)
+        {
+            if ($callback === null && $abstract instanceof Closure) {
+                $this->resolvingCallback($abstract);
+            } else {
+                $this->resolvingCallbacks[$this->normalize($abstract)][] = $callback;
+            }
+        }
+    
+        /**
+         * Register a new after resolving callback for all types.
+         *
+         * @param  string   $abstract
+         * @param  \Closure|null $callback
+         * @return void
+         */
+        public function afterResolving($abstract, Closure $callback = null)
+        {
+            if ($abstract instanceof Closure && $callback === null) {
+                $this->afterResolvingCallback($abstract);
+            } else {
+                $this->afterResolvingCallbacks[$this->normalize($abstract)][] = $callback;
+            }
+        }
+    
+        /**
+         * Register a new resolving callback by type of its first argument.
+         *
+         * @param  \Closure  $callback
+         * @return void
+         */
+        protected function resolvingCallback(Closure $callback)
+        {
+            $abstract = $this->getFunctionHint($callback);
+    
+            if ($abstract) {
+                $this->resolvingCallbacks[$abstract][] = $callback;
+            } else {
+                $this->globalResolvingCallbacks[] = $callback;
+            }
+        }
+    
+        /**
+         * Register a new after resolving callback by type of its first argument.
+         *
+         * @param  \Closure  $callback
+         * @return void
+         */
+        protected function afterResolvingCallback(Closure $callback)
+        {
+            $abstract = $this->getFunctionHint($callback);
+    
+            if ($abstract) {
+                $this->afterResolvingCallbacks[$abstract][] = $callback;
+            } else {
+                $this->globalAfterResolvingCallbacks[] = $callback;
+            }
+        }
+    
+        /**
+         * Get the type hint for this closure's first argument.
+         *
+         * @param  \Closure  $callback
+         * @return mixed
+         */
+        protected function getFunctionHint(Closure $callback)
+        {
+            $function = new ReflectionFunction($callback);
+    
+            if ($function->getNumberOfParameters() == 0) {
+                return;
+            }
+    
+            $expected = $function->getParameters()[0];
+    
+            if (! $expected->getClass()) {
+                return;
+            }
+    
+            return $expected->getClass()->name;
+        }
+    
+        /**
+         * Fire all of the resolving callbacks.
+         *
+         * @param  string  $abstract
+         * @param  mixed   $object
+         * @return void
+         */
+        protected function fireResolvingCallbacks($abstract, $object)
+        {
+            $this->fireCallbackArray($object, $this->globalResolvingCallbacks);
+    
+            $this->fireCallbackArray(
+                $object, $this->getCallbacksForType(
+                    $abstract, $object, $this->resolvingCallbacks
+                )
+            );
+    
+            $this->fireCallbackArray($object, $this->globalAfterResolvingCallbacks);
+    
+            $this->fireCallbackArray(
+                $object, $this->getCallbacksForType(
+                    $abstract, $object, $this->afterResolvingCallbacks
+                )
+            );
+        }
+    
+        /**
+         * Get all callbacks for a given type.
+         *
+         * @param  string  $abstract
+         * @param  object  $object
+         * @param  array   $callbacksPerType
+         *
+         * @return array
+         */
+        protected function getCallbacksForType($abstract, $object, array $callbacksPerType)
+        {
+            $results = [];
+    
+            foreach ($callbacksPerType as $type => $callbacks) {
+                if ($type === $abstract || $object instanceof $type) {
+                    $results = array_merge($results, $callbacks);
+                }
+            }
+    
+            return $results;
+        }
+    
+        /**
+         * Fire an array of callbacks with an object.
+         *
+         * @param  mixed  $object
+         * @param  array  $callbacks
+         * @return void
+         */
+        protected function fireCallbackArray($object, array $callbacks)
+        {
+            foreach ($callbacks as $callback) {
+                $callback($object, $this);
+            }
+        }
+    
+        /**
+         * Determine if a given type is shared.
+         *
+         * @param  string  $abstract
+         * @return bool
+         */
+        public function isShared($abstract)
+        {
+            $abstract = $this->normalize($abstract);
+    
+            if (isset($this->instances[$abstract])) {
+                return true;
+            }
+    
+            if (! isset($this->bindings[$abstract]['shared'])) {
+                return false;
+            }
+    
+            return $this->bindings[$abstract]['shared'] === true;
+        }
+    
+        /**
+         * Determine if the given concrete is buildable.
+         *
+         * @param  mixed   $concrete
+         * @param  string  $abstract
+         * @return bool
+         */
+        protected function isBuildable($concrete, $abstract)
+        {
+            return $concrete === $abstract || $concrete instanceof Closure;
+        }
+    
+        /**
+         * Get the alias for an abstract if available.
+         *
+         * @param  string  $abstract
+         * @return string
+         */
+        protected function getAlias($abstract)
+        {
+            return isset($this->aliases[$abstract]) ? $this->aliases[$abstract] : $abstract;
+        }
+    
+        /**
+         * Get the container's bindings.
+         *
+         * @return array
+         */
+        public function getBindings()
+        {
+            return $this->bindings;
+        }
+    
+        /**
+         * Drop all of the stale instances and aliases.
+         *
+         * @param  string  $abstract
+         * @return void
+         */
+        protected function dropStaleInstances($abstract)
+        {
+            unset($this->instances[$abstract], $this->aliases[$abstract]);
+        }
+    
+        public function forgetInstance($abstract)
+        {
+            unset($this->instances[$this->normalize($abstract)]);
+        }
+    
+        public function forgetInstances()
+        {
+            $this->instances = [];
+        }
+    
+        public function flush()
+        {
+            $this->aliases = [];
+            $this->resolved = [];
+            $this->bindings = [];
+            $this->instances = [];
+        }
+    
+        public static function getInstance()
+        {
+            return static::$instance;
+        }
+    
+        public static function setInstance(ContainerContract $container)
+        {
+            static::$instance = $container;
+        }
+    
+        public function offsetExists($key)
+        {
+            return $this->bound($key);
+        }
+    
+        public function offsetGet($key)
+        {
+            return $this->make($key);
+        }
+    
+        public function offsetSet($key, $value)
+        {
+            // If the value is not a Closure, we will make it one. This simply gives
+            // more "drop-in" replacement functionality for the Pimple which this
+            // container's simplest functions are base modeled and built after.
+            if (! $value instanceof Closure) {
+                $value = function () use ($value) {
+                    return $value;
+                };
+            }
+    
+            $this->bind($key, $value);
+        }
+    
+        public function offsetUnset($key)
+        {
+            $key = $this->normalize($key);
+    
+            unset($this->bindings[$key], $this->instances[$key], $this->resolved[$key]);
+        }
+    
+        public function __get($key)
+        {
+            return $this[$key];
+        }
+    
+        public function __set($key, $value)
+        {
+            $this[$key] = $value;
+        }
+    }
+    
+    
     
 {% endhighlight %}
 	
-　　１．　一个参数
-	app()->bind(class_name);　//表示 使用app('class_name')；　class_name通常是　能实例化的类的类名　获取　别名　
-	
-	２.  两个参数   
-	app()->bind(abstract, class_name);　// 通常第一个表示接口名称(或其别名)　第二个表示实现该接口的类名称。
-　　
-	例子：
+#### 流程分析
 
-	app()->bind(abstract, function() {
-		return new Object;
-	});
+###### 绑定　及　解析
+    1. 一个参数 
+    class App\OneParamBind {}
+    app()->bind('\App\OneParamBind'); //　绑定
+    app('\App\OneParamBind'); // 解析获取对象
+    
+        绑定流程(假设是第一次绑定, 且为了方便理解，改成直接硬编码的形式)：
+            1.1　判断得出具体实现类不存在，则具体实现类型等于抽象实现类型
+            1.2  判断得出具体实现类型非匿名函数, 则转换成匿名函数　
+                    function ($c, $parameters = []) {
+                        return $c->build('App\OneParamBind', $parameters);
+                    }
+            1.3　保存至 $this->bindings
+                 $this->bindings['App\OneParamBind'] = [
+                    'concrete' => function ($c, $parameters = []) {
+                        return $c->build('App\OneParamBind', $parameters);
+                    },
+                    'shared' => false
+                 ];
+                   
+        解析流程:　
+            1.1　从绑定数组　$this->bindings 获取获取匿名函数
+                 $concrete = $this->bindings['App\OneParamBind']['concrete'];   
+            1.2　通过build()方法解析$concrete变量, 并返回我们所需要的对象
+            　　　1.2.1 判断$concretes是匿名函数，执行该函数
+            　　　1.2.2 $concretes匿名函数内通过build()方法　解析'App\OneParamBind'　这个字符串。
+                    $reflector = ReflectionClass('App\OneParamBind')反射类 判断该类型是可以实例化的
+                    $constructor = $reflector->getConstructor();　获取该类的构造函数，该类没有构造函数
+                    所以该类没有依赖注入，则直接实例化'App\OneParamBind'类,生成对象并返回。
+            1.3　判断得出该类型在容器中是非共享的(如果是共享的, 则保存在instances属性中, 下次调用时直接从instances里获取)　
+            1.4　$this->resolved[$abstract] = true;　标志该类型一解析过
+            1.5  最终返回对象
+        
+        从上面的流程中可以看出我们最终结果仅仅是实例化'App\OneParamBind'类.(另外该情况是可以不需要通过bind操作,直接使用make,省掉一系列没有必要的操作。)
+    
+        最终结论: 该种情况没必要直接使用 make方法, 使用最原始的new \App\OneParamBind();更合适,　所以不要盲目的使用make方法。
+    
+        上述的方法中, 'App\OneParamBind'没有使用构造函数, 如果有构造函数且参数类型是 class 或 interface, 
+    则对这个参数走make流程, 获取该参数对象并以参数的形式传递给　'App\OneParamBind'的构造函数中。　所以make(class_name)是也可以解析依赖关系.
+    例子：　　　　   
+        class A {
+            public function __construct(TestInterface $test) {}
+        }
+        interface TestInterface {}
+        class Test implement TestInterface {}
+        class Test2 implement TestInterface {}
+        
+        app()->bind('TestInterface', 'Test');
+        
+        app('A');　相当于　new A(new Test()); 
+        之所以使用TestInterface 作为参数类型, 为了根据业务逻辑使用其他实现了TestInterface的子类，如Test
+        该情况有两种场景:
+            1 基础组件, 比如短信发送类　A短信发送类的供应商出现问题, 导致短信发送失败, 则直接修改绑定操作使用B短信发送类pp()->bind('interface', 'B');　　
+            2 业务层, 根据业务需求重新绑定, app()->bind('TestInterface', 'Test2'); 
+              另外lumen针对类使用相同的接口, 接口需要绑定不同的类而提供上下文绑定功能
+              如　
+                 class B {
+                    public function __construct(TestInterface $test) {}
+                 }
+                 app()->when(B::class)
+                     ->needs(TestInterface::class)
+                     ->give(Test2::class);
+                 app('B')  相当于 new B(new Test2()); 
+              上下文绑定功能流程暂不分析. 　　
+              
+    2. 两个参数
+    // 通常第一个表示接口名称(或其别名)　第getFunctionHint二个表示实现该接口的类名称。
+    app()->bind(abstract, class_name);　$otherObject$otherObject
+    　　
+　　例子：
+
+        class Test implement TestInterface {}
+        class Test2 implement TestInterface {}        
+        app()->bind('TestInterface', 'Test');
+        app('TestInterface');　//　new Test();  其特点上述已分析过
+    
+    匿名函数绑定　
+    app()->bind(abstract, function($c, $param) {
+        $config = $c->config['memcache']; 
+        $otherObject = $c['otherObj'];                      
+        return new MemcachedObject($config, $otherObject);
+    });
+    
+    匿名函数绑定, 相对于其他更具有灵活性, 比较适合组件开发。
 
