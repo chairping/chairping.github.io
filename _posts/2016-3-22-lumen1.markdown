@@ -523,7 +523,7 @@ class Container implements ArrayAccess, ContainerContract
     
             // If we don't have a registered resolver or concrete for the type, we'll just
             // assume each type is a concrete name and will attempt to resolve it as is
-            // since the container should b$abstracte able to resolve concretes automatically.
+            // since the container should abstracte able to resolve concretes automatically.
             if (! isset($this->bindings[$abstract])) {
                 return $abstract;
             }
@@ -666,7 +666,7 @@ class Container implements ArrayAccess, ContainerContract
          * @throws \Illuminate\Contracts\Container\BindingResolutionException
          */
         protected function resolveNonClass(ReflectionParameter $parameter)
-        {
+        {　　// 参数也可以上下文绑定
             if (! is_null($concrete = $this->getContextualConcrete('$'.$parameter->name))) {
                 if ($concrete instanceof Closure) {
                     return call_user_func($concrete, $this);
@@ -865,7 +865,7 @@ $concrete变量表示具体类型, 通常是指类名, 匿名函数, null(此时
             1 基础组件, 比如短信发送类　A短信发送类的供应商出现问题, 导致短信发送失败, 则直接修改绑定操作使用B短信发送类pp()->bind('interface', 'B');　　
             2 业务层, 根据业务需求重新绑定, app()->bind('TestInterface', 'Test2'); 
               另外lumen针对类使用相同的接口, 接口需要绑定不同的类而提供上下文绑定功能
-              如　1       * Get the alias for an abstract if available.
+              例１　      
                  class B {
                     public function __construct(TestInterface $test) {}
                  }
@@ -883,7 +883,18 @@ $concrete变量表示具体类型, 通常是指类名, 匿名函数, null(此时
                  该流程中获取实际的依赖类名称,即Test2:class, 此时继续调make(Test2:class),实例化依赖类并
                  返回(现有的情况可不必调用make()方法, 可直接调用build()方法, 之所以用make()是为了应对其他
                  情况, 比如give(alias)的参数为别名).后续流程就不描述了,最终结果为new B(new Test2()); 
-                
+               
+              例２
+                class A {
+                    public function __construct($test) {
+                        var_dump($test);
+                    }
+                }
+                app()->when(A::class)->needs('$test')->give(function() {
+                    return 'xxxxx';
+                });
+                $t = app(A::class);
+                变量也可以上下文绑定, lumen容器提供了这个功能, 文档没有说明　
                  
     2. 两个参数
     // 通常第一个表示接口名称(或其别名)　第getFunctionHint二个表示实现该接口的类名称。
