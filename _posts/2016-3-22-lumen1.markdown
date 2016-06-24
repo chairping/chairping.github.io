@@ -32,7 +32,7 @@ ioc容器主要注册对象至容器中，当你调用的时候，可直接从�
     Container::resigster('request', function() {
         return new Request;
     });
-    
+    /var/www/html/chenping684.github.io
     Container::get('request'); // 每次返回一个新的对象
     
     Container::resigster('object', new Object); // get的时候每次返回同一个对象
@@ -208,9 +208,8 @@ class Container implements ArrayAccess, ContainerContract
         };
     }
     
-    /**
-         * Add a contextual binding to the container.
-         *
+    　　/**
+         *　添加上下文绑定信息至容器中
          * @param  string  $concrete
          * @param  string  $abstract
          * @param  \Closure|string  $implementation
@@ -222,8 +221,7 @@ class Container implements ArrayAccess, ContainerContract
         }
     
         /**
-         * Register a binding if it hasn't already been registered.getContextualConcrete
-         *
+         *　如果类型已经注册过　则不进行绑定操作
          * @param  string  $abstract
          * @param  \Closure|string|null  $concrete
          * @param  bool  $shared
@@ -237,8 +235,7 @@ class Container implements ArrayAccess, ContainerContract
         }
     
         /**
-         * Register a shared binding in the container.
-         *
+         *　共享绑定
          * @param  string|array  $abstract
          * @param  \Closure|string|null  $concrete
          * @return void
@@ -485,13 +482,11 @@ class Container implements ArrayAccess, ContainerContract
             // 获取匿名函数
             $concrete = $this->getConcrete($abstract);
     
-            // We're ready to instantiate an instance of the concrete type registered for
-            // the binding. This will instantiate the types, as well as resolve any of
-            // its "nested" dependencies recursively until all have gotten resolved.
+            // 判断是否可执行build操作($abstract == $concrete or  $concrete为匿名函数)
             if ($this->isBuildable($concrete, $abstract)) {
-                $object = $this->build($concrete, $parameters);
+                $object = $this->build($concrete, $parameters); // 实例化类并处理依赖关系
             } else {
-                $object = $this->make($concrete, $parameters);
+                $object = $this->make($concrete, $parameters);　// 上下文绑定的时候　才走这流程
             }
     
             // If we defined any extenders for this type, we'll need to spin through them
@@ -500,10 +495,6 @@ class Container implements ArrayAccess, ContainerContract
             foreach ($this->getExtenders($abstract) as $extender) {
                 $object = $extender($object, $this);
             }
-    
-            // If the requested type is registered as a singleton we'll want to cache off
-            // the instances in "memory" so we can return it later without creating an
-            // entirely new instance of an object on each subsequent request for it.
     
             // 如果绑定是共享类型　则结果保存instances变量中　达到共享
             if ($this->isShared($abstract)) {
@@ -789,8 +780,7 @@ class Container implements ArrayAccess, ContainerContract
         }
     
         /**
-         * Get the alias for an abstract if available.
-         *
+         *　获取别名　
          * @param  string  $abstract
          * @return string
          */
@@ -801,7 +791,7 @@ class Container implements ArrayAccess, ContainerContract
     
         /**
          * Drop all of the stale instances and aliases.
-         *
+         *　
          * @param  string  $abstract
          * @return void
          */
@@ -818,6 +808,9 @@ class Container implements ArrayAccess, ContainerContract
 #### 流程分析
 
 ###### 绑定　及　解析
+代码既是文档, 个人理解$abstract变量表示抽象类型, 作为从容器获取数据的key(make(key)), 通常该值是指类名,接口名,别名(别名实际上会转发成类名或借口名)，
+$concrete变量表示具体类型, 通常是指类名, 匿名函数, null(此时值bind()方法内部由$abstract赋值)
+    
     1. 一个参数 
     class App\OneParamBind {}
     app()->bind('\App\OneParamBind'); //　绑定
@@ -872,16 +865,26 @@ class Container implements ArrayAccess, ContainerContract
             1 基础组件, 比如短信发送类　A短信发送类的供应商出现问题, 导致短信发送失败, 则直接修改绑定操作使用B短信发送类pp()->bind('interface', 'B');　　
             2 业务层, 根据业务需求重新绑定, app()->bind('TestInterface', 'Test2'); 
               另外lumen针对类使用相同的接口, 接口需要绑定不同的类而提供上下文绑定功能
-              如　
+              如　1       * Get the alias for an abstract if available.
                  class B {
                     public function __construct(TestInterface $test) {}
                  }
                  app()->when(B::class)
                      ->needs(TestInterface::class)
-                     ->give(Test2::class);
-                 app('B')  相当于 new B(new Test2()); 
-              上下文绑定功能流程暂不分析. 　　
-              
+                     ->give(Test2::class); (1)
+                     
+                 app('B')  相当于 new B(new Test2());  (2)
+              流程：
+                 1. (1)操作中由　public $contextual = [];　
+                       保存信息　$contextual[B::class][TestInterface::class] = Test2::class;
+                 2. (2)流程中第一次会读取是上下文绑定信息, 由于使用的是end(buildSlack)来读取, buildSlack
+                 在build函数操作中才有值.然后进入build方法中, buildSlack保存当前$concrete 即B::class, 
+                 B有依赖其他类,程序自动解析依赖类，进行依赖注入,此时重新调用make(TestInterface::class), 
+                 该流程中获取实际的依赖类名称,即Test2:class, 此时继续调make(Test2:class),实例化依赖类并
+                 返回(现有的情况可不必调用make()方法, 可直接调用build()方法, 之所以用make()是为了应对其他
+                 情况, 比如give(alias)的参数为别名).后续流程就不描述了,最终结果为new B(new Test2()); 
+                
+                 
     2. 两个参数
     // 通常第一个表示接口名称(或其别名)　第getFunctionHint二个表示实现该接口的类名称。
     app()->bind(abstract, class_name);　$otherObject$otherObject
